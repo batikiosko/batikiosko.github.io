@@ -44,6 +44,31 @@ function categoryIcon(name: string): string {
   return CATEGORY_ICONS[name.trim().toLowerCase()] ?? "🛒";
 }
 
+function slugify(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+// Cualquier imagen puesta en src/assets/categories/<slug-de-la-categoria>.(jpg|jpeg|png|webp)
+// se usa automáticamente para esa categoría — no hace falta tocar código para agregarlas.
+const categoryImageModules = import.meta.glob<{ default: string }>("./assets/categories/*.{jpg,jpeg,png,webp}", {
+  eager: true,
+});
+const CATEGORY_IMAGES: Record<string, string> = {};
+for (const path in categoryImageModules) {
+  const fileName = path.split("/").pop()!.replace(/\.[^.]+$/, "");
+  CATEGORY_IMAGES[fileName] = categoryImageModules[path]!.default;
+}
+
+function categoryImage(name: string): string | null {
+  return CATEGORY_IMAGES[slugify(name)] ?? null;
+}
+
 interface Item extends PublicCatalogProduct {
   isNew: boolean;
   tag: "OFERTA" | "NUEVO" | null;
@@ -230,13 +255,35 @@ function Categories({ categories, active, onPick }: { categories: { name: string
         <div style={{ fontSize: 14, color: MUTED, maxWidth: 360 }}>Toca una categoría para filtrar el catálogo completo.</div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 14 }}>
-        {categories.map((c) => (
-          <div key={c.name} onClick={() => onPick(c.name)} style={categoryCardStyle(active === c.name)}>
-            <div style={{ fontSize: 30, lineHeight: 1, marginBottom: 12 }}>{categoryIcon(c.name)}</div>
-            <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{c.name}</div>
-            <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.7, marginTop: 4 }}>{c.count} productos</div>
-          </div>
-        ))}
+        {categories.map((c) => {
+          const img = categoryImage(c.name);
+          return (
+            <div key={c.name} onClick={() => onPick(c.name)} style={categoryCardStyle(active === c.name)}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  marginBottom: 12,
+                  background: active === c.name ? "rgba(255,255,255,.18)" : "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                {img ? (
+                  <img src={img} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <span style={{ fontSize: 26 }}>{categoryIcon(c.name)}</span>
+                )}
+              </div>
+              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{c.name}</div>
+              <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.7, marginTop: 4 }}>{c.count} productos</div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -599,7 +646,14 @@ export function App() {
       <Hero catalog={catalog} offerCount={offers.length} categoryCount={categories.length} />
       <FeatureCards />
       {categories.length > 0 && (
-        <Categories categories={categories} active={category} onPick={(name) => setCategory((prev) => (prev === name ? "Todas" : name))} />
+        <Categories
+          categories={categories}
+          active={category}
+          onPick={(name) => {
+            setCategory((prev) => (prev === name ? "Todas" : name));
+            document.getElementById("productos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
       )}
       <Offers items={offers} currency={catalog.currency} onOpen={(p) => setDetailId(p.id)} />
       <ProductGrid
