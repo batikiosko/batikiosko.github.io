@@ -642,7 +642,15 @@ export function App() {
   return (
     <div style={{ maxWidth: "100%", overflowX: "hidden", background: "#fff" }}>
       <MarqueeBar />
-      <Header query={query} onQuery={setQuery} />
+      <Header
+        query={query}
+        onQuery={(v) => {
+          setQuery(v);
+          if (v.trim() && !query.trim()) {
+            document.getElementById("productos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }}
+      />
       <Hero catalog={catalog} offerCount={offers.length} categoryCount={categories.length} />
       <FeatureCards />
       {categories.length > 0 && (
