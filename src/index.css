@@ -1,0 +1,72 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: Archivo, Helvetica, sans-serif;
+  color: #111111;
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: #e53935;
+  text-decoration: none;
+}
+a:hover {
+  color: #c62828;
+}
+::selection {
+  background: #e53935;
+  color: #fff;
+}
+img {
+  max-width: 100%;
+}
+input,
+button {
+  font-family: inherit;
+}
+button {
+  cursor: pointer;
+}
+
+@keyframes bkRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes bkFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes bkPop {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes bkMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
