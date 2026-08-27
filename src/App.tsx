@@ -131,7 +131,7 @@ function ProductImage({ item, dark = false }: { item: Item; dark?: boolean }) {
   );
 }
 
-function Header({ query, onQuery }: { query: string; onQuery: (v: string) => void }) {
+function Header({ query, onQuery, onSearch }: { query: string; onQuery: (v: string) => void; onSearch: () => void }) {
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 60, background: "rgba(255,255,255,.92)", backdropFilter: "blur(14px)", borderBottom: `1px solid ${LINE}` }}>
       <div className="bk-header-inner" style={{ maxWidth: 1280, margin: "0 auto", padding: "14px 22px", display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
@@ -151,8 +151,14 @@ function Header({ query, onQuery }: { query: string; onQuery: (v: string) => voi
             </a>
           ))}
         </nav>
-        <div className="bk-search" style={{ display: "flex", alignItems: "center", gap: 10, background: PAPER, border: `1.5px solid ${LINE}`, borderRadius: 999, padding: "10px 16px", minWidth: 230 }}>
-          <div style={{ width: 14, height: 14, border: "2px solid #757575", borderRadius: "50%", flexShrink: 0 }} />
+        <form
+          className="bk-search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSearch();
+          }}
+          style={{ display: "flex", alignItems: "center", gap: 10, background: PAPER, border: `1.5px solid ${LINE}`, borderRadius: 999, padding: "6px 8px 6px 16px", minWidth: 230 }}
+        >
           <input
             type="text"
             placeholder="¿Qué estás buscando?"
@@ -160,7 +166,29 @@ function Header({ query, onQuery }: { query: string; onQuery: (v: string) => voi
             onChange={(e) => onQuery(e.target.value)}
             style={{ border: 0, outline: 0, background: "transparent", fontSize: 14, color: INK, width: "100%" }}
           />
-        </div>
+          <button
+            type="submit"
+            aria-label="Buscar"
+            style={{
+              flexShrink: 0,
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              border: 0,
+              background: RED,
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+        </form>
       </div>
     </header>
   );
@@ -334,7 +362,11 @@ function Offers({ items, currency, onOpen }: { items: Item[]; currency: string; 
 
 function ProductCard({ item, currency, onOpen }: { item: Item; currency: string; onOpen: () => void }) {
   return (
-    <div onClick={onOpen} style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 24, overflow: "hidden", cursor: "pointer" }}>
+    <div
+      id={`producto-${item.id}`}
+      onClick={onOpen}
+      style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 24, overflow: "hidden", cursor: "pointer" }}
+    >
       <div style={{ position: "relative", aspectRatio: "1/1", background: PAPER }}>
         <ProductImage item={item} />
         {item.tag && (
@@ -622,6 +654,15 @@ export function App() {
     [items],
   );
 
+  function goToSearchResult() {
+    const first = visible[0];
+    if (first) {
+      document.getElementById(`producto-${first.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      document.getElementById("productos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
   const detail = detailId ? (items.find((p) => p.id === detailId) ?? null) : null;
   const related = useMemo(() => {
     if (!detail) return [];
@@ -642,15 +683,7 @@ export function App() {
   return (
     <div style={{ maxWidth: "100%", overflowX: "hidden", background: "#fff" }}>
       <MarqueeBar />
-      <Header
-        query={query}
-        onQuery={(v) => {
-          setQuery(v);
-          if (v.trim() && !query.trim()) {
-            document.getElementById("productos")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }}
-      />
+      <Header query={query} onQuery={setQuery} onSearch={goToSearchResult} />
       <Hero catalog={catalog} offerCount={offers.length} categoryCount={categories.length} />
       <FeatureCards />
       {categories.length > 0 && (
