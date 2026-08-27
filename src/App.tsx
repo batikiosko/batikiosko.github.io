@@ -134,11 +134,11 @@ function ProductImage({ item, dark = false }: { item: Item; dark?: boolean }) {
 function Header({ query, onQuery }: { query: string; onQuery: (v: string) => void }) {
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 60, background: "rgba(255,255,255,.92)", backdropFilter: "blur(14px)", borderBottom: `1px solid ${LINE}` }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "14px 22px", display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
-        <a href="#inicio" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+      <div className="bk-header-inner" style={{ maxWidth: 1280, margin: "0 auto", padding: "14px 22px", display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
+        <a href="#inicio" className="bk-logo" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <img src={logo} alt="BATIKIOSCO" style={{ height: 56, width: "auto", display: "block", mixBlendMode: "multiply" }} />
         </a>
-        <nav style={{ display: "flex", gap: 6, marginLeft: "auto", flexWrap: "wrap" }}>
+        <nav className="bk-nav" style={{ display: "flex", gap: 6, marginLeft: "auto", flexWrap: "wrap" }}>
           {[
             ["#inicio", "Inicio"],
             ["#categorias", "Categorías"],
@@ -146,12 +146,12 @@ function Header({ query, onQuery }: { query: string; onQuery: (v: string) => voi
             ["#productos", "Productos"],
             ["#novedades", "Novedades"],
           ].map(([href, label]) => (
-            <a key={href} href={href} style={{ fontSize: 14, fontWeight: 600, color: INK, padding: "10px 14px", borderRadius: 999 }}>
+            <a key={href} href={href} style={{ fontSize: 14, fontWeight: 600, color: INK, padding: "10px 14px", borderRadius: 999, whiteSpace: "nowrap" }}>
               {label}
             </a>
           ))}
         </nav>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, background: PAPER, border: `1.5px solid ${LINE}`, borderRadius: 999, padding: "10px 16px", minWidth: 230 }}>
+        <div className="bk-search" style={{ display: "flex", alignItems: "center", gap: 10, background: PAPER, border: `1.5px solid ${LINE}`, borderRadius: 999, padding: "10px 16px", minWidth: 230 }}>
           <div style={{ width: 14, height: 14, border: "2px solid #757575", borderRadius: "50%", flexShrink: 0 }} />
           <input
             type="text"
