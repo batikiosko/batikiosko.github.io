@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchCatalog, type PublicCatalog, type PublicCatalogProduct } from "./api.js";
 import { formatMoney } from "./format.js";
 import logo from "./assets/logo-batikiosco.jpeg";
+import catalogQr from "./assets/catalog-qr.png";
+import cesLogo from "./assets/ces-logo-icon.svg";
 
 const RED = "#E53935";
 const RED_DARK = "#C62828";
@@ -249,24 +251,48 @@ function Hero({ catalog, offerCount, categoryCount }: { catalog: PublicCatalog; 
   );
 }
 
-const FEATURES = [
-  { title: "Productos seleccionados", desc: "Lo que más se pide en el barrio, curado uno por uno.", bg: RED },
-  { title: "Nuevas ofertas", desc: "Promociones que cambian cada semana.", bg: INK },
-  { title: "Precios actualizados", desc: "Lo que ves aquí es lo que ves en el mostrador.", bg: RED },
-  { title: "Todo en un catálogo", desc: "Explora sin filas y sin apuros, desde el celular.", bg: INK },
-];
+const BUSINESS_ADDRESS = "Máximo Gómez, esquina entre calle General Carrillo y Juan Alberto Díaz, Zulueta";
+const BUSINESS_HOURS = "Lunes a domingo, de 8:00 AM a 7:00 PM";
 
-function FeatureCards() {
+const PinIcon = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
+const ClockIcon = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
+function VisitInfo() {
   return (
     <section style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(40px,5vw,68px) 22px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 18 }}>
-        {FEATURES.map((f) => (
-          <div key={f.title} style={{ background: PAPER, borderRadius: 20, padding: 26, border: `1px solid ${LINE}` }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: f.bg, marginBottom: 16 }} />
-            <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, marginBottom: 6 }}>{f.title}</div>
-            <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.55 }}>{f.desc}</div>
+        <div style={{ background: PAPER, borderRadius: 20, padding: 26, border: `1px solid ${LINE}` }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: RED, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            {PinIcon}
           </div>
-        ))}
+          <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, marginBottom: 6 }}>Dirección</div>
+          <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.55 }}>{BUSINESS_ADDRESS}</div>
+        </div>
+        <div style={{ background: PAPER, borderRadius: 20, padding: 26, border: `1px solid ${LINE}` }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: INK, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            {ClockIcon}
+          </div>
+          <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, marginBottom: 6 }}>Horario</div>
+          <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.55 }}>{BUSINESS_HOURS}</div>
+        </div>
+        <div style={{ background: INK, borderRadius: 20, padding: 26, border: `1px solid ${LINE}`, display: "flex", alignItems: "center", gap: 18 }}>
+          <img src={catalogQr} alt="Código QR del catálogo" style={{ width: 82, height: 82, borderRadius: 12, background: "#fff", padding: 4, flexShrink: 0 }} />
+          <div>
+            <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 18, color: "#fff", marginBottom: 6 }}>Escaneá y compartí</div>
+            <div style={{ fontSize: 13, color: "#9A9A9A", lineHeight: 1.5 }}>Este código lleva directo a este catálogo.</div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -579,6 +605,10 @@ function Footer() {
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: 22, borderTop: "1px solid #262626", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: 13, color: MUTED }}>© {new Date().getFullYear()} BATIKIOSCO. Todos los derechos reservados.</span>
         <span style={{ fontSize: 13, color: MUTED }}>Catálogo digital · No es tienda en línea</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: MUTED }}>
+          <img src={cesLogo} alt="Cuban Enterprise Solutions" style={{ width: 18, height: 18, display: "block" }} />
+          Desarrollado por Cuban Enterprise Solutions
+        </span>
       </div>
     </footer>
   );
@@ -685,7 +715,7 @@ export function App() {
       <MarqueeBar />
       <Header query={query} onQuery={setQuery} onSearch={goToSearchResult} />
       <Hero catalog={catalog} offerCount={offers.length} categoryCount={categories.length} />
-      <FeatureCards />
+      <VisitInfo />
       {categories.length > 0 && (
         <Categories
           categories={categories}

@@ -1,0 +1,10 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Cuban Enterprise Solution - emblem</title>
+<desc>Circular navy emblem with gold ring, a small red star, and the CES monogram in gold serif type.</desc>
+<circle cx="150" cy="150" r="145" fill="#0F2A43" stroke="#C9A227" stroke-width="4"/>
+<circle cx="150" cy="150" r="123" fill="none" stroke="#C9A227" stroke-width="1.5"/>
+<polygon points="150,66 153.53,75.15 163.32,75.67 155.71,81.85 158.23,91.33 150,86 141.77,91.33 144.29,81.85 136.68,75.67 146.47,75.15" fill="#A6332E"/>
+<text x="150" y="182" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="66" font-weight="700" letter-spacing="2" fill="#C9A227">CES</text>
+<line x1="95" y1="200" x2="205" y2="200" stroke="#C9A227" stroke-width="1.5"/>
+<text x="150" y="222" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="14" letter-spacing="3" fill="#C9A227">ENTERPRISE SOLUTION</text>
+</svg>
