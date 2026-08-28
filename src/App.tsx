@@ -268,6 +268,101 @@ const ClockIcon = (
   </svg>
 );
 
+const ShareIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.6" y1="10.6" x2="15.4" y2="6.4" />
+    <line x1="8.6" y1="13.4" x2="15.4" y2="17.6" />
+  </svg>
+);
+
+// Es siempre este dominio fijo (GitHub Pages), no depende de la compañía
+// activa ni de ningún dato del catálogo — mismo criterio que la URL fija del
+// formulario de alta en el escritorio (ClientIntake.tsx).
+const CATALOG_URL = "https://batikiosko.github.io";
+
+/** Debajo del QR: el mismo link en texto (para copiar en una compu, donde no
+ * hay cámara a mano) más un botón de compartir — usa el share nativo del
+ * celular si existe (así el cliente que ya está mirando el catálogo se lo
+ * manda a otro por WhatsApp en un toque) y si no, copia el link al
+ * portapapeles. */
+function ShareCatalog() {
+  const [copied, setCopied] = useState(false);
+
+  const share = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Catálogo BATIKIOSCO", text: "Mirá el catálogo de BATIKIOSCO", url: CATALOG_URL });
+      } catch {
+        // El usuario canceló el share nativo (o no hay nada roto): no hay
+        // nada que avisar acá.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(CATALOG_URL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Sin permiso de portapapeles: el link ya está visible como texto al
+      // lado, lo puede seleccionar a mano.
+    }
+  };
+
+  return (
+    <div
+      style={{
+        marginTop: 18,
+        paddingTop: 18,
+        borderTop: "1px solid rgba(255,255,255,.14)",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        flexWrap: "wrap",
+      }}
+    >
+      <div
+        style={{
+          flex: "1 1 160px",
+          minWidth: 0,
+          background: "rgba(255,255,255,.08)",
+          borderRadius: 10,
+          padding: "9px 12px",
+          fontSize: 13,
+          color: "#fff",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {CATALOG_URL}
+      </div>
+      <button
+        type="button"
+        onClick={() => void share()}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 7,
+          background: RED,
+          color: "#fff",
+          border: "none",
+          borderRadius: 10,
+          padding: "9px 16px",
+          fontWeight: 700,
+          fontSize: 13,
+          cursor: "pointer",
+          flexShrink: 0,
+        }}
+      >
+        {ShareIcon} {copied ? "¡Copiado!" : "Compartir"}
+      </button>
+    </div>
+  );
+}
+
 function VisitInfo() {
   return (
     <section style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(40px,5vw,68px) 22px" }}>
@@ -286,12 +381,15 @@ function VisitInfo() {
           <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, marginBottom: 6 }}>Horario</div>
           <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.55 }}>{BUSINESS_HOURS}</div>
         </div>
-        <div style={{ background: INK, borderRadius: 20, padding: 26, border: `1px solid ${LINE}`, display: "flex", alignItems: "center", gap: 18 }}>
-          <img src={catalogQr} alt="Código QR del catálogo" style={{ width: 82, height: 82, borderRadius: 12, background: "#fff", padding: 4, flexShrink: 0 }} />
-          <div>
-            <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 18, color: "#fff", marginBottom: 6 }}>Escaneá y compartí</div>
-            <div style={{ fontSize: 13, color: "#9A9A9A", lineHeight: 1.5 }}>Este código lleva directo a este catálogo.</div>
+        <div style={{ background: INK, borderRadius: 20, padding: 26, border: `1px solid ${LINE}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+            <img src={catalogQr} alt="Código QR del catálogo" style={{ width: 82, height: 82, borderRadius: 12, background: "#fff", padding: 4, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 18, color: "#fff", marginBottom: 6 }}>Escaneá y compartí</div>
+              <div style={{ fontSize: 13, color: "#9A9A9A", lineHeight: 1.5 }}>Este código lleva directo a este catálogo.</div>
+            </div>
           </div>
+          <ShareCatalog />
         </div>
       </div>
     </section>
