@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchCatalog, type PublicCatalog, type PublicCatalogProduct } from "./api.js";
 import { formatMoney } from "./format.js";
-import logo from "./assets/logo-batikiosco.jpeg";
+import logo from "./assets/logo-batikiosco-transparent.png";
 import catalogQr from "./assets/catalog-qr.png";
 import cesLogo from "./assets/ces-logo-icon.svg";
 
@@ -138,7 +138,7 @@ function Header({ query, onQuery, onSearch }: { query: string; onQuery: (v: stri
     <header style={{ position: "sticky", top: 0, zIndex: 60, background: "rgba(255,255,255,.92)", backdropFilter: "blur(14px)", borderBottom: `1px solid ${LINE}` }}>
       <div className="bk-header-inner" style={{ maxWidth: 1280, margin: "0 auto", padding: "14px 22px", display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
         <a href="#inicio" className="bk-logo" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <img src={logo} alt="BATIKIOSCO" style={{ height: 56, width: "auto", display: "block", mixBlendMode: "multiply" }} />
+          <img src={logo} alt="BATIKIOSCO" style={{ height: 56, width: "auto", display: "block" }} />
         </a>
         <nav className="bk-nav" style={{ display: "flex", gap: 6, marginLeft: "auto", flexWrap: "wrap" }}>
           {[
