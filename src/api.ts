@@ -11,6 +11,9 @@ export interface PublicCatalogProduct {
   name: string;
   category: string | null;
   description: string | null;
+  /** Renglones a mostrar debajo del nombre, uno por línea (descripción, peso,
+   * empaquetado — solo los que estén cargados). Ya vienen listos del servidor. */
+  catalogDetails: string[];
   imageUrl: string | null;
   salePrice: string;
   effectivePrice: string;

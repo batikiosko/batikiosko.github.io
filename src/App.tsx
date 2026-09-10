@@ -133,6 +133,31 @@ function ProductImage({ item, dark = false }: { item: Item; dark?: boolean }) {
   );
 }
 
+/** Los detalles del producto (descripción, peso, empaquetado) uno debajo del
+ * otro — vienen listos del servidor en `item.catalogDetails`. */
+function DetailLines({
+  lines,
+  color,
+  fontSize = 13.5,
+  marginBottom = 14,
+}: {
+  lines: string[];
+  color: string;
+  fontSize?: number;
+  marginBottom?: number;
+}) {
+  if (lines.length === 0) return null;
+  return (
+    <div style={{ marginBottom }}>
+      {lines.map((line, i) => (
+        <div key={i} style={{ fontSize, color, lineHeight: 1.5 }}>
+          {line}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Header({ query, onQuery, onSearch }: { query: string; onQuery: (v: string) => void; onSearch: () => void }) {
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 60, background: "rgba(255,255,255,.92)", backdropFilter: "blur(14px)", borderBottom: `1px solid ${LINE}` }}>
@@ -451,7 +476,7 @@ function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; o
       <div style={{ padding: 20 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>{item.category ?? "General"}</div>
         <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 21, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>{item.name}</div>
-        {item.description && <div style={{ fontSize: 13.5, color: "#9A9A9A", lineHeight: 1.5, marginBottom: 16 }}>{item.description}</div>}
+        <DetailLines lines={item.catalogDetails} color="#9A9A9A" marginBottom={16} />
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
           <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 28, color: RED }}>{formatMoney(item.effectivePrice, currency)}</span>
           <span style={{ fontSize: 15, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>
@@ -500,7 +525,7 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
       <div style={{ padding: "18px 18px 20px" }}>
         <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: RED, marginBottom: 8 }}>{item.category ?? "General"}</div>
         <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, marginBottom: 7 }}>{item.name}</div>
-        {item.description && <div style={{ fontSize: 13.5, color: MUTED, lineHeight: 1.5, marginBottom: 14 }}>{item.description}</div>}
+        <DetailLines lines={item.catalogDetails} color={MUTED} marginBottom={14} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
           <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 24, color: INK }}>{formatMoney(item.effectivePrice, currency)}</span>
           {item.onOffer && <span style={{ fontSize: 12, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>}
@@ -624,7 +649,7 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
               </div>
             </div>
             <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(26px,3.4vw,38px)", lineHeight: 1.05, margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "-.01em" }}>{item.name}</h3>
-            {item.description && <p style={{ fontSize: 16, color: MUTED, lineHeight: 1.6, margin: "0 0 22px" }}>{item.description}</p>}
+            <DetailLines lines={item.catalogDetails} color={MUTED} fontSize={16} marginBottom={22} />
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
               <div style={{ background: INK, borderRadius: 14, padding: "12px 16px" }}>
                 <div style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Precio</div>
@@ -771,7 +796,8 @@ export function App() {
     const q = query.trim().toLowerCase();
     return items.filter((p) => {
       const matchesCategory = category === "Todas" || p.category === category;
-      const matchesQuery = !q || `${p.name} ${p.description ?? ""} ${p.category ?? ""}`.toLowerCase().includes(q);
+      const matchesQuery =
+        !q || `${p.name} ${p.catalogDetails.join(" ")} ${p.category ?? ""}`.toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
   }, [items, category, query]);
