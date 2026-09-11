@@ -71,6 +71,43 @@ function categoryImage(name: string): string | null {
   return CATEGORY_IMAGES[slugify(name)] ?? null;
 }
 
+/** "16.7" → "17", "20" → "20" — para el sello grande de descuento, un
+ * decimal suelto solo le resta impacto a lo que tiene que leerse de un
+ * vistazo. */
+function roundPercent(percent: string): string {
+  return Math.round(Number(percent)).toString();
+}
+
+/** Sello grande y llamativo con el % de descuento — mismo componente en la
+ * tarjeta de oferta destacada y en la del catálogo general, para que una
+ * oferta se reconozca de un vistazo sin tener que leer el precio primero. */
+function PercentBadge({ percent, size = "lg" }: { percent: string; size?: "lg" | "sm" }) {
+  const big = size === "lg";
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: big ? 12 : 10,
+        right: big ? 12 : 10,
+        background: RED,
+        color: "#fff",
+        borderRadius: "50%",
+        width: big ? 64 : 50,
+        height: big ? 64 : 50,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        transform: "rotate(8deg)",
+        boxShadow: "0 8px 20px rgba(229,57,53,.45)",
+        border: "2.5px solid #fff",
+      }}
+    >
+      <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: big ? 20 : 15, lineHeight: 1 }}>-{roundPercent(percent)}%</span>
+    </div>
+  );
+}
+
 interface Item extends PublicCatalogProduct {
   isNew: boolean;
   tag: "OFERTA" | "NUEVO" | null;
@@ -469,28 +506,38 @@ function Categories({ categories, active, onPick }: { categories: { name: string
 function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; onOpen: () => void }) {
   const conditioned = !!item.offerMinQuantity;
   return (
-    <div onClick={onOpen} style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 24, overflow: "hidden", cursor: "pointer" }}>
+    <div
+      onClick={onOpen}
+      style={{ background: "#1A1A1A", border: `2px solid ${RED}`, borderRadius: 24, overflow: "hidden", cursor: "pointer", boxShadow: "0 14px 34px rgba(229,57,53,.22)" }}
+    >
       <div style={{ position: "relative", aspectRatio: "4/3", background: PAPER }}>
         <ProductImage item={item} dark />
-        <div style={{ position: "absolute", top: 14, left: 14, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>OFERTA</div>
+        <div style={{ position: "absolute", top: 14, left: 14, background: RED, color: "#fff", fontSize: 11.5, fontWeight: 800, letterSpacing: ".12em", padding: "7px 13px", borderRadius: 999 }}>🔥 OFERTA</div>
+        {item.offerPercent && <PercentBadge percent={item.offerPercent} />}
       </div>
       <div style={{ padding: 20 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>{item.category ?? "General"}</div>
-        <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 21, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>{item.name}</div>
+        <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 22, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>{item.name}</div>
         <DetailLines lines={item.catalogDetails} color="#9A9A9A" marginBottom={16} />
         {conditioned ? (
           <>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 28, color: "#fff" }}>{formatMoney(item.salePrice, currency)}</span>
+              <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 26, color: "#fff" }}>{formatMoney(item.salePrice, currency)}</span>
+              <span style={{ fontSize: 12.5, color: "#9A9A9A" }}>precio normal</span>
             </div>
-            <div style={{ marginTop: 8, fontSize: 13, fontWeight: 700, color: RED_SOFT }}>
-              Llevando {item.offerMinQuantity}+: {formatMoney(item.offerFixedPrice!, currency)} c/u ({item.offerPercent}% off)
+            <div style={{ marginTop: 10, background: RED, borderRadius: 14, padding: "12px 14px" }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "#FFD9D6", marginBottom: 3 }}>
+                Llevando {item.offerMinQuantity} o más
+              </div>
+              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 24, color: "#fff" }}>
+                {formatMoney(item.offerFixedPrice!, currency)} <span style={{ fontSize: 14, fontWeight: 700 }}>c/u</span>
+              </div>
             </div>
           </>
         ) : (
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 28, color: RED }}>{formatMoney(item.effectivePrice, currency)}</span>
-            <span style={{ fontSize: 15, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>
+            <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 34, color: RED }}>{formatMoney(item.effectivePrice, currency)}</span>
+            <span style={{ fontSize: 16, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>
           </div>
         )}
       </div>
@@ -526,25 +573,46 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
     <div
       id={`producto-${item.id}`}
       onClick={onOpen}
-      style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 24, overflow: "hidden", cursor: "pointer" }}
+      style={{
+        background: "#fff",
+        border: item.onOffer ? `2px solid ${RED}` : `1px solid ${LINE}`,
+        borderRadius: 24,
+        overflow: "hidden",
+        cursor: "pointer",
+        boxShadow: item.onOffer ? "0 10px 26px rgba(229,57,53,.16)" : undefined,
+      }}
     >
       <div style={{ position: "relative", aspectRatio: "1/1", background: PAPER }}>
         <ProductImage item={item} />
-        {item.tag && (
-          <div style={{ position: "absolute", top: 14, left: 14, background: INK, color: "#fff", fontSize: 10.5, fontWeight: 800, letterSpacing: ".12em", padding: "6px 11px", borderRadius: 999 }}>{item.tag}</div>
+        {item.onOffer ? (
+          <div style={{ position: "absolute", top: 14, left: 14, background: RED, color: "#fff", fontSize: 10.5, fontWeight: 800, letterSpacing: ".12em", padding: "6px 11px", borderRadius: 999 }}>
+            🔥 OFERTA
+          </div>
+        ) : (
+          item.tag && (
+            <div style={{ position: "absolute", top: 14, left: 14, background: INK, color: "#fff", fontSize: 10.5, fontWeight: 800, letterSpacing: ".12em", padding: "6px 11px", borderRadius: 999 }}>{item.tag}</div>
+          )
         )}
+        {item.onOffer && item.offerPercent && <PercentBadge percent={item.offerPercent} size="sm" />}
       </div>
       <div style={{ padding: "18px 18px 20px" }}>
         <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: RED, marginBottom: 8 }}>{item.category ?? "General"}</div>
         <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, marginBottom: 7 }}>{item.name}</div>
         <DetailLines lines={item.catalogDetails} color={MUTED} marginBottom={14} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
-          <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 24, color: INK }}>{formatMoney(item.effectivePrice, currency)}</span>
-          {item.onOffer && !item.offerMinQuantity && <span style={{ fontSize: 12, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>}
+          <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: item.onOffer ? 27 : 24, color: item.onOffer && !item.offerMinQuantity ? RED : INK }}>
+            {formatMoney(item.effectivePrice, currency)}
+          </span>
+          {item.onOffer && !item.offerMinQuantity && <span style={{ fontSize: 12.5, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>}
         </div>
         {item.onOffer && item.offerMinQuantity && (
-          <div style={{ marginTop: 6, fontSize: 11.5, fontWeight: 700, color: RED }}>
-            Llevando {item.offerMinQuantity}+: {formatMoney(item.offerFixedPrice!, currency)} c/u
+          <div style={{ marginTop: 10, background: "#FDEDEC", borderRadius: 12, padding: "9px 12px" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: RED_DARK, marginBottom: 2 }}>
+              Llevando {item.offerMinQuantity} o más
+            </div>
+            <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 16, color: RED_DARK }}>
+              {formatMoney(item.offerFixedPrice!, currency)} <span style={{ fontSize: 11.5, fontWeight: 700 }}>c/u</span>
+            </div>
           </div>
         )}
       </div>
@@ -653,9 +721,14 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
           <div style={{ background: PAPER, padding: 26 }}>
             <div style={{ position: "relative", aspectRatio: "1/1", borderRadius: 22, background: "#EFEFEF", overflow: "hidden" }}>
               <ProductImage item={item} />
-              {item.tag && (
-                <div style={{ position: "absolute", top: 16, left: 16, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>{item.tag}</div>
+              {item.onOffer ? (
+                <div style={{ position: "absolute", top: 16, left: 16, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>🔥 OFERTA</div>
+              ) : (
+                item.tag && (
+                  <div style={{ position: "absolute", top: 16, left: 16, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>{item.tag}</div>
+                )
               )}
+              {item.onOffer && item.offerPercent && <PercentBadge percent={item.offerPercent} />}
             </div>
           </div>
           <div style={{ padding: 32 }}>
@@ -668,9 +741,11 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
             <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(26px,3.4vw,38px)", lineHeight: 1.05, margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "-.01em" }}>{item.name}</h3>
             <DetailLines lines={item.catalogDetails} color={MUTED} fontSize={16} marginBottom={22} />
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
-              <div style={{ background: INK, borderRadius: 14, padding: "12px 16px" }}>
-                <div style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Precio</div>
-                <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 19, color: "#fff" }}>{formatMoney(item.effectivePrice, currency)}</div>
+              <div style={{ background: item.onOffer && !item.offerMinQuantity ? RED : INK, borderRadius: 14, padding: "12px 16px" }}>
+                <div style={{ fontSize: 11, color: item.onOffer && !item.offerMinQuantity ? "#FFD9D6" : "#9A9A9A", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>
+                  Precio
+                </div>
+                <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: "#fff" }}>{formatMoney(item.effectivePrice, currency)}</div>
               </div>
               {item.onOffer && !item.offerMinQuantity && (
                 <div style={{ background: PAPER, borderRadius: 14, padding: "12px 16px" }}>
@@ -680,11 +755,11 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
               )}
               {item.onOffer && item.offerMinQuantity && (
                 <div style={{ background: "#FDEDEC", borderRadius: 14, padding: "12px 16px" }}>
-                  <div style={{ fontSize: 11, color: RED_DARK, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>
+                  <div style={{ fontSize: 11, color: RED_DARK, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>
                     Oferta llevando {item.offerMinQuantity}+
                   </div>
-                  <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 17, color: RED_DARK }}>
-                    {formatMoney(item.offerFixedPrice!, currency)} c/u ({item.offerPercent}% off)
+                  <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 20, color: RED_DARK }}>
+                    {formatMoney(item.offerFixedPrice!, currency)} <span style={{ fontSize: 13 }}>c/u ({roundPercent(item.offerPercent!)}% off)</span>
                   </div>
                 </div>
               )}
