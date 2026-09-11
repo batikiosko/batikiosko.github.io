@@ -467,6 +467,7 @@ function Categories({ categories, active, onPick }: { categories: { name: string
 }
 
 function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; onOpen: () => void }) {
+  const conditioned = !!item.offerMinQuantity;
   return (
     <div onClick={onOpen} style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 24, overflow: "hidden", cursor: "pointer" }}>
       <div style={{ position: "relative", aspectRatio: "4/3", background: PAPER }}>
@@ -477,10 +478,21 @@ function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; o
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>{item.category ?? "General"}</div>
         <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 21, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>{item.name}</div>
         <DetailLines lines={item.catalogDetails} color="#9A9A9A" marginBottom={16} />
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-          <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 28, color: RED }}>{formatMoney(item.effectivePrice, currency)}</span>
-          <span style={{ fontSize: 15, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>
-        </div>
+        {conditioned ? (
+          <>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 28, color: "#fff" }}>{formatMoney(item.salePrice, currency)}</span>
+            </div>
+            <div style={{ marginTop: 8, fontSize: 13, fontWeight: 700, color: RED_SOFT }}>
+              Llevando {item.offerMinQuantity}+: {formatMoney(item.offerFixedPrice!, currency)} c/u ({item.offerPercent}% off)
+            </div>
+          </>
+        ) : (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 28, color: RED }}>{formatMoney(item.effectivePrice, currency)}</span>
+            <span style={{ fontSize: 15, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -528,8 +540,13 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
         <DetailLines lines={item.catalogDetails} color={MUTED} marginBottom={14} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
           <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 24, color: INK }}>{formatMoney(item.effectivePrice, currency)}</span>
-          {item.onOffer && <span style={{ fontSize: 12, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>}
+          {item.onOffer && !item.offerMinQuantity && <span style={{ fontSize: 12, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>}
         </div>
+        {item.onOffer && item.offerMinQuantity && (
+          <div style={{ marginTop: 6, fontSize: 11.5, fontWeight: 700, color: RED }}>
+            Llevando {item.offerMinQuantity}+: {formatMoney(item.offerFixedPrice!, currency)} c/u
+          </div>
+        )}
       </div>
     </div>
   );
@@ -655,10 +672,20 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
                 <div style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Precio</div>
                 <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 19, color: "#fff" }}>{formatMoney(item.effectivePrice, currency)}</div>
               </div>
-              {item.onOffer && (
+              {item.onOffer && !item.offerMinQuantity && (
                 <div style={{ background: PAPER, borderRadius: 14, padding: "12px 16px" }}>
                   <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Precio de lista</div>
                   <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, textDecoration: "line-through", color: MUTED }}>{formatMoney(item.salePrice, currency)}</div>
+                </div>
+              )}
+              {item.onOffer && item.offerMinQuantity && (
+                <div style={{ background: "#FDEDEC", borderRadius: 14, padding: "12px 16px" }}>
+                  <div style={{ fontSize: 11, color: RED_DARK, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>
+                    Oferta llevando {item.offerMinQuantity}+
+                  </div>
+                  <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 17, color: RED_DARK }}>
+                    {formatMoney(item.offerFixedPrice!, currency)} c/u ({item.offerPercent}% off)
+                  </div>
                 </div>
               )}
             </div>

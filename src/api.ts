@@ -16,8 +16,20 @@ export interface PublicCatalogProduct {
   catalogDetails: string[];
   imageUrl: string | null;
   salePrice: string;
+  /** Igual a `salePrice` si no hay oferta viva, o si la oferta tiene
+   * condición de cantidad (`offerMinQuantity`) — en ese caso no hay un
+   * "precio actual" único para mostrar acá, hay que usar
+   * `offerFixedPrice`/`offerMinQuantity`. */
   effectivePrice: string;
   onOffer: boolean;
+  /** Solo si `onOffer`: siempre presentes las dos formas, sin importar cómo
+   * cargó la oferta el dueño (calculada la que falte del lado del servidor). */
+  offerPercent: string | null;
+  offerFixedPrice: string | null;
+  /** `null` = sin condición, ya reflejada en `effectivePrice`. Con valor, es
+   * una oferta por volumen: `offerFixedPrice` es "llevando esta cantidad o
+   * más", no el precio de 1 unidad sola. */
+  offerMinQuantity: string | null;
   createdAt: string;
 }
 
