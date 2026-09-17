@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchCatalog, type PublicCatalog, type PublicCatalogProduct } from "./api.js";
 import { formatMoney } from "./format.js";
 import logo from "./assets/logo-batikiosco-transparent.png";
@@ -458,7 +458,15 @@ function VisitInfo() {
   );
 }
 
-function Categories({ categories, active, onPick }: { categories: { name: string; count: number }[]; active: string; onPick: (name: string) => void }) {
+function Categories({
+  categories,
+  selected,
+  onToggle,
+}: {
+  categories: { name: string; count: number }[];
+  selected: Set<string>;
+  onToggle: (name: string) => void;
+}) {
   return (
     <section id="categorias" style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(28px,4vw,48px) 22px" }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 26 }}>
@@ -466,13 +474,14 @@ function Categories({ categories, active, onPick }: { categories: { name: string
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: RED, marginBottom: 10 }}>Explora</div>
           <h2 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(30px,4vw,46px)", margin: 0, letterSpacing: "-.015em" }}>Categorías</h2>
         </div>
-        <div style={{ fontSize: 14, color: MUTED, maxWidth: 360 }}>Toca una categoría para filtrar el catálogo completo.</div>
+        <div style={{ fontSize: 14, color: MUTED, maxWidth: 360 }}>Toca una o más categorías para combinarlas y filtrar el catálogo.</div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 14 }}>
         {categories.map((c) => {
           const img = categoryImage(c.name);
+          const active = selected.has(c.name);
           return (
-            <div key={c.name} onClick={() => onPick(c.name)} style={categoryCardStyle(active === c.name)}>
+            <div key={c.name} onClick={() => onToggle(c.name)} style={categoryCardStyle(active)}>
               <div
                 style={{
                   width: 48,
@@ -480,7 +489,7 @@ function Categories({ categories, active, onPick }: { categories: { name: string
                   borderRadius: 14,
                   overflow: "hidden",
                   marginBottom: 12,
-                  background: active === c.name ? "rgba(255,255,255,.18)" : "#fff",
+                  background: active ? "rgba(255,255,255,.18)" : "#fff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -516,7 +525,7 @@ function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; o
         {item.offerPercent && <PercentBadge percent={item.offerPercent} />}
       </div>
       <div style={{ padding: 20 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>{item.category ?? "General"}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>{item.categories[0] ?? "General"}</div>
         <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 22, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>{item.name}</div>
         <DetailLines lines={item.catalogDetails} color="#9A9A9A" marginBottom={16} />
         {conditioned ? (
@@ -596,7 +605,7 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
         {item.onOffer && item.offerPercent && <PercentBadge percent={item.offerPercent} size="sm" />}
       </div>
       <div style={{ padding: "18px 18px 20px" }}>
-        <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: RED, marginBottom: 8 }}>{item.category ?? "General"}</div>
+        <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: RED, marginBottom: 8 }}>{item.categories[0] ?? "General"}</div>
         <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, marginBottom: 7 }}>{item.name}</div>
         <DetailLines lines={item.catalogDetails} color={MUTED} marginBottom={14} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
@@ -623,17 +632,19 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
 function ProductGrid({
   visible,
   resultLabel,
-  chips,
-  activeChip,
-  onPickChip,
+  categoryNames,
+  selectedCategories,
+  onToggleCategory,
+  onClearCategories,
   currency,
   onOpen,
 }: {
   visible: Item[];
   resultLabel: string;
-  chips: string[];
-  activeChip: string;
-  onPickChip: (name: string) => void;
+  categoryNames: string[];
+  selectedCategories: Set<string>;
+  onToggleCategory: (name: string) => void;
+  onClearCategories: () => void;
   currency: string;
   onOpen: (p: Item) => void;
 }) {
@@ -647,8 +658,11 @@ function ProductGrid({
         <div style={{ fontSize: 15, color: MUTED, fontWeight: 500 }}>{resultLabel}</div>
       </div>
       <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "18px 0 26px" }}>
-        {chips.map((c) => (
-          <div key={c} onClick={() => onPickChip(c)} style={chipStyle(activeChip === c)}>
+        <div onClick={onClearCategories} style={chipStyle(selectedCategories.size === 0)}>
+          Todas
+        </div>
+        {categoryNames.map((c) => (
+          <div key={c} onClick={() => onToggleCategory(c)} style={chipStyle(selectedCategories.has(c))}>
             {c}
           </div>
         ))}
@@ -678,7 +692,7 @@ function NoveltyCard({ item, currency, onOpen }: { item: Item; currency: string;
       </div>
       <div style={{ padding: 18 }}>
         <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, marginBottom: 6 }}>{item.name}</div>
-        <div style={{ fontSize: 13, color: MUTED, marginBottom: 14 }}>{item.category ?? "General"}</div>
+        <div style={{ fontSize: 13, color: MUTED, marginBottom: 14 }}>{item.categories[0] ?? "General"}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: INK }}>{formatMoney(item.effectivePrice, currency)}</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: RED }}>Ver producto →</span>
@@ -710,6 +724,121 @@ function Novelties({ items, currency, onOpen }: { items: Item[]; currency: strin
   );
 }
 
+/** Arreglo de estilo para las flechas del carrusel — mismo look, solo cambia
+ * de qué lado va cada una. */
+function galleryArrowStyle(side: "left" | "right", disabled: boolean): React.CSSProperties {
+  const base: React.CSSProperties = {
+    position: "absolute",
+    top: "50%",
+    transform: "translateY(-50%)",
+    width: 34,
+    height: 34,
+    borderRadius: "50%",
+    border: "none",
+    background: "rgba(17,17,17,.55)",
+    color: "#fff",
+    fontSize: 20,
+    lineHeight: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: disabled ? "default" : "pointer",
+    opacity: disabled ? 0.35 : 1,
+  };
+  return side === "left" ? { ...base, left: 10 } : { ...base, right: 10 };
+}
+
+/** Carrusel deslizable de la ficha de producto: foto principal + hasta 4
+ * fotos adicionales (item.galleryImages) — solo acá, nunca en la grilla ni en
+ * las tarjetas de oferta/novedad, que siguen mostrando una sola foto
+ * (ProductImage) igual que siempre. Sin fotos adicionales, se comporta
+ * exactamente igual que antes. */
+function ProductGallery({ item }: { item: Item }) {
+  const images = useMemo(
+    () => [item.imageUrl, ...item.galleryImages].filter((u): u is string => Boolean(u)),
+    [item],
+  );
+  const [index, setIndex] = useState(0);
+  useEffect(() => setIndex(0), [item.id]);
+  const touchStartX = useRef<number | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]!.clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || images.length <= 1) return;
+    const delta = e.changedTouches[0]!.clientX - touchStartX.current;
+    touchStartX.current = null;
+    const SWIPE_THRESHOLD = 40;
+    if (delta > SWIPE_THRESHOLD) setIndex((i) => Math.max(0, i - 1));
+    else if (delta < -SWIPE_THRESHOLD) setIndex((i) => Math.min(images.length - 1, i + 1));
+  };
+
+  return (
+    <>
+      <div
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        style={{ position: "relative", aspectRatio: "1/1", borderRadius: 22, background: "#EFEFEF", overflow: "hidden", touchAction: "pan-y" }}
+      >
+        {images.length > 0 ? (
+          <img src={images[index]} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+        ) : (
+          <ProductImage item={item} />
+        )}
+        {item.onOffer ? (
+          <div style={{ position: "absolute", top: 16, left: 16, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>🔥 OFERTA</div>
+        ) : (
+          item.tag && (
+            <div style={{ position: "absolute", top: 16, left: 16, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>{item.tag}</div>
+          )
+        )}
+        {item.onOffer && item.offerPercent && <PercentBadge percent={item.offerPercent} />}
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Foto anterior"
+              onClick={() => setIndex((i) => Math.max(0, i - 1))}
+              disabled={index === 0}
+              style={galleryArrowStyle("left", index === 0)}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              aria-label="Foto siguiente"
+              onClick={() => setIndex((i) => Math.min(images.length - 1, i + 1))}
+              disabled={index === images.length - 1}
+              style={galleryArrowStyle("right", index === images.length - 1)}
+            >
+              ›
+            </button>
+          </>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 12 }}>
+          {images.map((_, i) => (
+            <div
+              key={i}
+              onClick={() => setIndex(i)}
+              style={{
+                cursor: "pointer",
+                width: i === index ? 20 : 7,
+                height: 7,
+                borderRadius: 999,
+                background: i === index ? RED : LINE,
+                transition: "width .2s, background .2s",
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Item; related: Item[]; currency: string; onClose: () => void; onOpen: (p: Item) => void }) {
   return (
     <div
@@ -719,21 +848,11 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
       <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 30, maxWidth: 960, width: "100%", margin: "auto", overflow: "hidden", boxShadow: "0 40px 90px rgba(0,0,0,.4)" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))" }}>
           <div style={{ background: PAPER, padding: 26 }}>
-            <div style={{ position: "relative", aspectRatio: "1/1", borderRadius: 22, background: "#EFEFEF", overflow: "hidden" }}>
-              <ProductImage item={item} />
-              {item.onOffer ? (
-                <div style={{ position: "absolute", top: 16, left: 16, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>🔥 OFERTA</div>
-              ) : (
-                item.tag && (
-                  <div style={{ position: "absolute", top: 16, left: 16, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>{item.tag}</div>
-                )
-              )}
-              {item.onOffer && item.offerPercent && <PercentBadge percent={item.offerPercent} />}
-            </div>
+            <ProductGallery item={item} />
           </div>
           <div style={{ padding: 32 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: RED }}>{item.category ?? "General"}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: RED }}>{item.categories[0] ?? "General"}</div>
               <div onClick={onClose} style={{ width: 34, height: 34, borderRadius: "50%", background: PAPER, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, color: INK, flexShrink: 0 }}>
                 ×
               </div>
@@ -870,7 +989,10 @@ function CenteredMessage({ title, text }: { title: string; text: string }) {
 export function App() {
   const [catalog, setCatalog] = useState<PublicCatalog | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState("Todas");
+  // Multi-selección: cero categorías elegidas = "Todas". Un producto puede
+  // tener más de una categoría (ver Product.catalogCategories), así que acá
+  // también se puede elegir más de un filtro a la vez y se combinan.
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
 
@@ -885,24 +1007,33 @@ export function App() {
   const categories = useMemo(() => {
     const map = new Map<string, number>();
     for (const p of items) {
-      const name = p.category?.trim();
-      if (!name) continue;
-      map.set(name, (map.get(name) ?? 0) + 1);
+      for (const raw of p.categories) {
+        const name = raw.trim();
+        if (!name) continue;
+        map.set(name, (map.get(name) ?? 0) + 1);
+      }
     }
     return [...map.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name));
   }, [items]);
 
-  const chips = useMemo(() => ["Todas", ...categories.map((c) => c.name)], [categories]);
+  function toggleCategory(name: string) {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items.filter((p) => {
-      const matchesCategory = category === "Todas" || p.category === category;
+      const matchesCategory = selectedCategories.size === 0 || p.categories.some((c) => selectedCategories.has(c));
       const matchesQuery =
-        !q || `${p.name} ${p.catalogDetails.join(" ")} ${p.category ?? ""}`.toLowerCase().includes(q);
+        !q || `${p.name} ${p.catalogDetails.join(" ")} ${p.categories.join(" ")}`.toLowerCase().includes(q);
       return matchesCategory && matchesQuery;
     });
-  }, [items, category, query]);
+  }, [items, selectedCategories, query]);
 
   const offers = useMemo(() => items.filter((p) => p.onOffer), [items]);
   const novelties = useMemo(
@@ -922,8 +1053,8 @@ export function App() {
   const detail = detailId ? (items.find((p) => p.id === detailId) ?? null) : null;
   const related = useMemo(() => {
     if (!detail) return [];
-    const sameCategory = items.filter((p) => p.category === detail.category && p.id !== detail.id);
-    const others = items.filter((p) => p.category !== detail.category);
+    const sameCategory = items.filter((p) => p.id !== detail.id && p.categories.some((c) => detail.categories.includes(c)));
+    const others = items.filter((p) => p.id !== detail.id && !p.categories.some((c) => detail.categories.includes(c)));
     return [...sameCategory, ...others].slice(0, 3);
   }, [items, detail]);
 
@@ -934,7 +1065,13 @@ export function App() {
     return <CenteredMessage title="Cargando catálogo..." text="Un momento, estamos trayendo los productos y ofertas del kiosco." />;
   }
 
-  const resultLabel = `${visible.length} ${visible.length === 1 ? "producto" : "productos"}${category === "Todas" ? " en el catálogo" : ` en ${category}`}`;
+  const resultLabel = `${visible.length} ${visible.length === 1 ? "producto" : "productos"}${
+    selectedCategories.size === 0
+      ? " en el catálogo"
+      : selectedCategories.size === 1
+        ? ` en ${[...selectedCategories][0]}`
+        : ` en ${selectedCategories.size} categorías`
+  }`;
 
   return (
     <div style={{ maxWidth: "100%", overflowX: "hidden", background: "#fff" }}>
@@ -945,9 +1082,9 @@ export function App() {
       {categories.length > 0 && (
         <Categories
           categories={categories}
-          active={category}
-          onPick={(name) => {
-            setCategory((prev) => (prev === name ? "Todas" : name));
+          selected={selectedCategories}
+          onToggle={(name) => {
+            toggleCategory(name);
             document.getElementById("productos")?.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
         />
@@ -956,9 +1093,10 @@ export function App() {
       <ProductGrid
         visible={visible}
         resultLabel={resultLabel}
-        chips={chips}
-        activeChip={category}
-        onPickChip={setCategory}
+        categoryNames={categories.map((c) => c.name)}
+        selectedCategories={selectedCategories}
+        onToggleCategory={toggleCategory}
+        onClearCategories={() => setSelectedCategories(new Set())}
         currency={catalog.currency}
         onOpen={(p) => setDetailId(p.id)}
       />

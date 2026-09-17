@@ -9,12 +9,21 @@ const COMPANY_ID = import.meta.env.VITE_COMPANY_ID ?? "cmt7ni4vh0000zxuwpq1drg58
 export interface PublicCatalogProduct {
   id: string;
   name: string;
+  /** La categoría principal — se mantiene por compatibilidad, para agrupar
+   * y filtrar hay que usar `categories`. */
   category: string | null;
+  /** Todas las categorías del producto (la principal + las adicionales),
+   * sin vacíos ni duplicados — sobre esto se arman los filtros y las
+   * categorías de la vidriera. Puede estar vacío. */
+  categories: string[];
   description: string | null;
   /** Renglones a mostrar debajo del nombre, uno por línea (descripción, peso,
    * empaquetado — solo los que estén cargados). Ya vienen listos del servidor. */
   catalogDetails: string[];
   imageUrl: string | null;
+  /** Fotos adicionales, solo para el carrusel al tocar el producto — la
+   * grilla y las tarjetas siguen mostrando únicamente `imageUrl`. */
+  galleryImages: string[];
   salePrice: string;
   /** Igual a `salePrice` si no hay oferta viva, o si la oferta tiene
    * condición de cantidad (`offerMinQuantity`) — en ese caso no hay un
