@@ -4,7 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#111111" />
-    <meta name="description" content="Catálogo digital de BATIKIOSCO — productos, precios y ofertas actualizados." />
+    <meta name="robots" content="index, follow" />
+    <meta name="description" content="Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, categorías, ofertas y precios actualizados, disponibles para comprar en el local." />
+    <link rel="canonical" href="https://batikiosko.github.io/" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -15,7 +17,122 @@
       href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Archivo:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>BATIKIOSCO — Catálogo digital</title>
+    <title>Batikiosco | Catálogo digital de productos y precios en Zulueta, Cuba</title>
+
+    <!-- Open Graph / Facebook / WhatsApp / Telegram -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Batikiosco" />
+    <meta property="og:title" content="Batikiosco | Catálogo digital de productos y precios en Zulueta, Cuba" />
+    <meta property="og:description" content="Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, categorías, ofertas y precios actualizados, disponibles para comprar en el local." />
+    <meta property="og:url" content="https://batikiosko.github.io/" />
+    <meta property="og:image" content="https://batikiosko.github.io/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="es_CU" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Batikiosco | Catálogo digital de productos y precios en Zulueta, Cuba" />
+    <meta name="twitter:description" content="Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, categorías, ofertas y precios actualizados, disponibles para comprar en el local." />
+    <meta name="twitter:image" content="https://batikiosko.github.io/og-image.png" />
+
+    <!--
+      Datos estructurados (Schema.org / JSON-LD) — solo hechos ya confirmados
+      con el dueño y visibles en la propia página (dirección y horario están
+      en la sección "Dirección"/"Horario" de la vidriera). No se declara
+      telephone/sameAs/geo porque no hay esos datos reales todavía — agregar
+      cuando existan, nunca inventarlos.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://batikiosko.github.io/#organization",
+            "name": "Batikiosco",
+            "url": "https://batikiosko.github.io/",
+            "logo": "https://batikiosko.github.io/og-image.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://batikiosko.github.io/#website",
+            "url": "https://batikiosko.github.io/",
+            "name": "Batikiosco",
+            "description": "Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba.",
+            "publisher": { "@id": "https://batikiosko.github.io/#organization" },
+            "inLanguage": "es"
+          },
+          {
+            "@type": ["Store", "LocalBusiness"],
+            "@id": "https://batikiosko.github.io/#store",
+            "name": "Batikiosco",
+            "url": "https://batikiosko.github.io/",
+            "image": "https://batikiosko.github.io/og-image.png",
+            "priceRange": "$$",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Máximo Gómez, esquina entre calle General Carrillo y Juan Alberto Díaz",
+              "addressLocality": "Zulueta",
+              "addressRegion": "Villa Clara",
+              "addressCountry": "CU"
+            },
+            "openingHoursSpecification": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+              "opens": "08:00",
+              "closes": "19:00"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://batikiosko.github.io/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "¿Qué es Batikiosco?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Batikiosco es un kiosco de barrio en Zulueta, Villa Clara, Cuba. Este sitio es su catálogo digital: muestra los productos y precios reales del negocio."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Puedo comprar directamente desde este catálogo?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Este catálogo es informativo: los precios se muestran como referencia y las compras se hacen directamente en el local."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Los precios y las ofertas están actualizados?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Sí. El catálogo se conecta en vivo al mismo sistema que usa Batikiosco en el mostrador, así que los precios y las ofertas reflejan lo que hay disponible en el momento."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Dónde queda Batikiosco?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "En Máximo Gómez, esquina entre calle General Carrillo y Juan Alberto Díaz, Zulueta, Villa Clara, Cuba."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Cuál es el horario de atención de Batikiosco?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Lunes a domingo, de 8:00 AM a 7:00 PM."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-WB4KS6EYFP"></script>

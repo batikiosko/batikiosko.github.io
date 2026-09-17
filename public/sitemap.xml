@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Solo lista URLs reales que existen hoy. Batikiosko es hoy una sola página
+  (SPA con secciones por ancla, no rutas propias) — cuando existan páginas
+  indexables de verdad por producto/categoría/negocio/ubicación, se agregan
+  acá como entradas nuevas, nunca antes de que la página exista de verdad.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://batikiosko.github.io/</loc>
+    <lastmod>2026-09-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

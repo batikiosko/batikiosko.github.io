@@ -15,6 +15,17 @@ const PAPER = "#F5F5F5";
 
 const NEW_WINDOW_DAYS = 21;
 
+/** Un solo lugar para los links de navegación — se repiten en el header y en
+ * el pie de página; antes estaban duplicados a mano en los dos lugares. */
+const NAV_LINKS: [string, string][] = [
+  ["#inicio", "Inicio"],
+  ["#categorias", "Categorías"],
+  ["#ofertas", "Ofertas"],
+  ["#productos", "Productos"],
+  ["#novedades", "Novedades"],
+  ["#preguntas", "Preguntas"],
+];
+
 const CATEGORY_ICONS: Record<string, string> = {
   bebidas: "🥤",
   "dulces y snacks": "🍬",
@@ -151,7 +162,15 @@ function categoryCardStyle(active: boolean): React.CSSProperties {
 
 function ProductImage({ item, dark = false }: { item: Item; dark?: boolean }) {
   if (item.imageUrl) {
-    return <img src={item.imageUrl} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />;
+    return (
+      <img
+        src={item.imageUrl}
+        alt={item.name}
+        loading="lazy"
+        decoding="async"
+        style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }}
+      />
+    );
   }
   return (
     <div
@@ -203,13 +222,7 @@ function Header({ query, onQuery, onSearch }: { query: string; onQuery: (v: stri
           <img src={logo} alt="BATIKIOSCO" style={{ height: 56, width: "auto", display: "block" }} />
         </a>
         <nav className="bk-nav" style={{ display: "flex", gap: 6, marginLeft: "auto", flexWrap: "wrap" }}>
-          {[
-            ["#inicio", "Inicio"],
-            ["#categorias", "Categorías"],
-            ["#ofertas", "Ofertas"],
-            ["#productos", "Productos"],
-            ["#novedades", "Novedades"],
-          ].map(([href, label]) => (
+          {NAV_LINKS.map(([href, label]) => (
             <a key={href} href={href} style={{ fontSize: 14, fontWeight: 600, color: INK, padding: "10px 14px", borderRadius: 999, whiteSpace: "nowrap" }}>
               {label}
             </a>
@@ -302,7 +315,7 @@ function Hero({ catalog, offerCount, categoryCount }: { catalog: PublicCatalog; 
         </div>
         <div style={{ position: "relative", animation: "bkFade .9s ease .15s both" }}>
           <div style={{ position: "relative", background: INK, borderRadius: 34, padding: 26, boxShadow: "0 34px 80px rgba(17,17,17,.28)" }}>
-            <img src={logo} alt="BATIKIOSCO" style={{ width: "100%", display: "block", borderRadius: 22, background: "#fff" }} />
+            <img src={logo} alt="BATIKIOSCO" loading="eager" style={{ width: "100%", display: "block", borderRadius: 22, background: "#fff" }} />
             <div style={{ position: "absolute", left: -16, bottom: 34, background: RED, color: "#fff", fontWeight: 800, fontFamily: "'Baloo 2', cursive", fontSize: 18, padding: "12px 20px", borderRadius: 14, boxShadow: "0 14px 30px rgba(229,57,53,.4)", transform: "rotate(-4deg)" }}>
               Tu kiosco, ahora digital
             </div>
@@ -497,7 +510,7 @@ function Categories({
                 }}
               >
                 {img ? (
-                  <img src={img} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={img} alt={c.name} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <span style={{ fontSize: 26 }}>{categoryIcon(c.name)}</span>
                 )}
@@ -515,7 +528,7 @@ function Categories({
 function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; onOpen: () => void }) {
   const conditioned = !!item.offerMinQuantity;
   return (
-    <div
+    <article
       onClick={onOpen}
       style={{ background: "#1A1A1A", border: `2px solid ${RED}`, borderRadius: 24, overflow: "hidden", cursor: "pointer", boxShadow: "0 14px 34px rgba(229,57,53,.22)" }}
     >
@@ -526,7 +539,7 @@ function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; o
       </div>
       <div style={{ padding: 20 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>{item.categories[0] ?? "General"}</div>
-        <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 22, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>{item.name}</div>
+        <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 22, color: "#fff", lineHeight: 1.15, margin: "0 0 8px" }}>{item.name}</h3>
         <DetailLines lines={item.catalogDetails} color="#9A9A9A" marginBottom={16} />
         {conditioned ? (
           <>
@@ -550,7 +563,7 @@ function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; o
           </div>
         )}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -579,7 +592,7 @@ function Offers({ items, currency, onOpen }: { items: Item[]; currency: string; 
 
 function ProductCard({ item, currency, onOpen }: { item: Item; currency: string; onOpen: () => void }) {
   return (
-    <div
+    <article
       id={`producto-${item.id}`}
       onClick={onOpen}
       style={{
@@ -606,7 +619,7 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
       </div>
       <div style={{ padding: "18px 18px 20px" }}>
         <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: RED, marginBottom: 8 }}>{item.categories[0] ?? "General"}</div>
-        <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, marginBottom: 7 }}>{item.name}</div>
+        <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, margin: "0 0 7px" }}>{item.name}</h3>
         <DetailLines lines={item.catalogDetails} color={MUTED} marginBottom={14} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
           <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: item.onOffer ? 27 : 24, color: item.onOffer && !item.offerMinQuantity ? RED : INK }}>
@@ -625,7 +638,7 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
           </div>
         )}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -685,20 +698,20 @@ function ProductGrid({
 
 function NoveltyCard({ item, currency, onOpen }: { item: Item; currency: string; onOpen: () => void }) {
   return (
-    <div onClick={onOpen} style={{ flex: "0 0 270px", scrollSnapAlign: "start", background: "#fff", border: `1px solid ${LINE}`, borderRadius: 24, overflow: "hidden", cursor: "pointer" }}>
+    <article onClick={onOpen} style={{ flex: "0 0 270px", scrollSnapAlign: "start", background: "#fff", border: `1px solid ${LINE}`, borderRadius: 24, overflow: "hidden", cursor: "pointer" }}>
       <div style={{ position: "relative", aspectRatio: "4/3", background: "#F7F7F7" }}>
         <ProductImage item={item} />
         <div style={{ position: "absolute", top: 14, left: 14, background: RED, color: "#fff", fontSize: 10.5, fontWeight: 800, letterSpacing: ".12em", padding: "6px 11px", borderRadius: 999 }}>NUEVO</div>
       </div>
       <div style={{ padding: 18 }}>
-        <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, marginBottom: 6 }}>{item.name}</div>
+        <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, margin: "0 0 6px" }}>{item.name}</h3>
         <div style={{ fontSize: 13, color: MUTED, marginBottom: 14 }}>{item.categories[0] ?? "General"}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: INK }}>{formatMoney(item.effectivePrice, currency)}</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: RED }}>Ver producto →</span>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -917,13 +930,7 @@ function Footer() {
         <div>
           <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: MUTED, marginBottom: 16 }}>Navegación</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-            {[
-              ["#inicio", "Inicio"],
-              ["#categorias", "Categorías"],
-              ["#ofertas", "Ofertas"],
-              ["#productos", "Productos"],
-              ["#novedades", "Novedades"],
-            ].map(([href, label]) => (
+            {NAV_LINKS.map(([href, label]) => (
               <a key={href} href={href} style={{ color: "#fff", fontSize: 15, fontWeight: 500 }}>
                 {label}
               </a>
@@ -983,6 +990,97 @@ function CenteredMessage({ title, text }: { title: string; text: string }) {
         <div style={{ fontSize: 15, color: MUTED, maxWidth: 380 }}>{text}</div>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Preguntas frecuentes — tienen que ser IDÉNTICAS al FAQPage de index.html:
+// Schema.org (y las guías de Google) exigen que un FAQPage refleje contenido
+// que el visitante puede leer de verdad en la página, nunca datos que solo
+// existen en el JSON-LD. Si se edita una pregunta, hay que editar las dos.
+// ---------------------------------------------------------------------------
+const FAQ_ITEMS: { question: string; answer: string }[] = [
+  {
+    question: "¿Qué es Batikiosco?",
+    answer:
+      "Batikiosco es un kiosco de barrio en Zulueta, Villa Clara, Cuba. Este sitio es su catálogo digital: muestra los productos y precios reales del negocio.",
+  },
+  {
+    question: "¿Puedo comprar directamente desde este catálogo?",
+    answer: "No. Este catálogo es informativo: los precios se muestran como referencia y las compras se hacen directamente en el local.",
+  },
+  {
+    question: "¿Los precios y las ofertas están actualizados?",
+    answer:
+      "Sí. El catálogo se conecta en vivo al mismo sistema que usa Batikiosco en el mostrador, así que los precios y las ofertas reflejan lo que hay disponible en el momento.",
+  },
+  {
+    question: "¿Dónde queda Batikiosco?",
+    answer: `En ${BUSINESS_ADDRESS}.`,
+  },
+  {
+    question: "¿Cuál es el horario de atención de Batikiosco?",
+    answer: `${BUSINESS_HOURS}.`,
+  },
+];
+
+function FAQ() {
+  return (
+    <section id="preguntas" style={{ maxWidth: 900, margin: "0 auto", padding: "clamp(40px,5vw,68px) 22px" }}>
+      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: RED, marginBottom: 10 }}>Ayuda</div>
+      <h2 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(28px,3.6vw,40px)", margin: "0 0 26px", letterSpacing: "-.015em" }}>
+        Preguntas frecuentes
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {FAQ_ITEMS.map((f) => (
+          <div key={f.question} style={{ background: PAPER, borderRadius: 18, padding: "20px 22px", border: `1px solid ${LINE}` }}>
+            <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, margin: "0 0 8px" }}>{f.question}</h3>
+            <p style={{ fontSize: 14.5, color: MUTED, lineHeight: 1.6, margin: 0 }}>{f.answer}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Evita que un nombre/descripción de producto con "</script>" adentro corte
+ * el <script> de datos estructurados a la mitad — mitigación estándar para
+ * JSON-LD embebido con dangerouslySetInnerHTML. */
+function safeJsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+/** Product/Offer de los productos cargados en este momento — a diferencia
+ * del resto de los datos estructurados (Organization/WebSite/Store/FAQPage,
+ * siempre iguales, ver index.html), esto depende del catálogo real que se
+ * trae en vivo desde el servidor, así que solo puede armarse acá. Precio y
+ * moneda son los mismos que ve cualquier visitante; "InStock" es correcto
+ * siempre, porque /public/catalog ya excluye productos sin existencia (ver
+ * posPublicCatalogService.getPublicCatalog). Esto lo ven los rastreadores
+ * que ejecutan JavaScript (Google sí; la mayoría de los bots de IA, hoy,
+ * todavía no — ver la nota sobre pre-renderizado). */
+function ProductStructuredData({ items, currency }: { items: Item[]; currency: string }) {
+  if (items.length === 0) return null;
+  const graph = items.map((p) => ({
+    "@type": "Product",
+    name: p.name,
+    ...(p.description ? { description: p.description } : {}),
+    ...(p.imageUrl ? { image: p.imageUrl } : {}),
+    ...(p.categories[0] ? { category: p.categories[0] } : {}),
+    offers: {
+      "@type": "Offer",
+      price: p.effectivePrice,
+      priceCurrency: currency,
+      availability: "https://schema.org/InStock",
+      url: `https://batikiosko.github.io/#producto-${p.id}`,
+    },
+  }));
+  return (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger -- JSON-LD, no HTML: safeJsonLd escapa "<" para que no se pueda cortar el <script>.
+      dangerouslySetInnerHTML={{ __html: safeJsonLd({ "@context": "https://schema.org", "@graph": graph }) }}
+    />
   );
 }
 
@@ -1075,32 +1173,36 @@ export function App() {
 
   return (
     <div style={{ maxWidth: "100%", overflowX: "hidden", background: "#fff" }}>
+      <ProductStructuredData items={items} currency={catalog.currency} />
       <MarqueeBar />
       <Header query={query} onQuery={setQuery} onSearch={goToSearchResult} />
-      <Hero catalog={catalog} offerCount={offers.length} categoryCount={categories.length} />
-      <VisitInfo />
-      {categories.length > 0 && (
-        <Categories
-          categories={categories}
-          selected={selectedCategories}
-          onToggle={(name) => {
-            toggleCategory(name);
-            document.getElementById("productos")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
+      <main id="main-content">
+        <Hero catalog={catalog} offerCount={offers.length} categoryCount={categories.length} />
+        <VisitInfo />
+        {categories.length > 0 && (
+          <Categories
+            categories={categories}
+            selected={selectedCategories}
+            onToggle={(name) => {
+              toggleCategory(name);
+              document.getElementById("productos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          />
+        )}
+        <Offers items={offers} currency={catalog.currency} onOpen={(p) => setDetailId(p.id)} />
+        <ProductGrid
+          visible={visible}
+          resultLabel={resultLabel}
+          categoryNames={categories.map((c) => c.name)}
+          selectedCategories={selectedCategories}
+          onToggleCategory={toggleCategory}
+          onClearCategories={() => setSelectedCategories(new Set())}
+          currency={catalog.currency}
+          onOpen={(p) => setDetailId(p.id)}
         />
-      )}
-      <Offers items={offers} currency={catalog.currency} onOpen={(p) => setDetailId(p.id)} />
-      <ProductGrid
-        visible={visible}
-        resultLabel={resultLabel}
-        categoryNames={categories.map((c) => c.name)}
-        selectedCategories={selectedCategories}
-        onToggleCategory={toggleCategory}
-        onClearCategories={() => setSelectedCategories(new Set())}
-        currency={catalog.currency}
-        onOpen={(p) => setDetailId(p.id)}
-      />
-      <Novelties items={novelties} currency={catalog.currency} onOpen={(p) => setDetailId(p.id)} />
+        <Novelties items={novelties} currency={catalog.currency} onOpen={(p) => setDetailId(p.id)} />
+        <FAQ />
+      </main>
       <Footer />
       {detail && (
         <ProductDetail item={detail} related={related} currency={catalog.currency} onClose={() => setDetailId(null)} onOpen={(p) => setDetailId(p.id)} />
