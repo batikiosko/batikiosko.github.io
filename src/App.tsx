@@ -544,7 +544,7 @@ function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; o
         {conditioned ? (
           <>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 26, color: "#fff" }}>{formatMoney(item.salePrice, currency)}</span>
+              <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 26, color: "#fff" }}>{formatMoney(item.salePrice, item.priceCurrency || currency)}</span>
               <span style={{ fontSize: 12.5, color: "#9A9A9A" }}>precio normal</span>
             </div>
             <div style={{ marginTop: 10, background: RED, borderRadius: 14, padding: "12px 14px" }}>
@@ -552,14 +552,14 @@ function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; o
                 Llevando {item.offerMinQuantity} o más
               </div>
               <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 24, color: "#fff" }}>
-                {formatMoney(item.offerFixedPrice!, currency)} <span style={{ fontSize: 14, fontWeight: 700 }}>c/u</span>
+                {formatMoney(item.offerFixedPrice!, item.priceCurrency || currency)} <span style={{ fontSize: 14, fontWeight: 700 }}>c/u</span>
               </div>
             </div>
           </>
         ) : (
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 34, color: RED }}>{formatMoney(item.effectivePrice, currency)}</span>
-            <span style={{ fontSize: 16, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>
+            <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 34, color: RED }}>{formatMoney(item.effectivePrice, item.priceCurrency || currency)}</span>
+            <span style={{ fontSize: 16, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, item.priceCurrency || currency)}</span>
           </div>
         )}
       </div>
@@ -623,9 +623,9 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
         <DetailLines lines={item.catalogDetails} color={MUTED} marginBottom={14} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
           <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: item.onOffer ? 27 : 24, color: item.onOffer && !item.offerMinQuantity ? RED : INK }}>
-            {formatMoney(item.effectivePrice, currency)}
+            {formatMoney(item.effectivePrice, item.priceCurrency || currency)}
           </span>
-          {item.onOffer && !item.offerMinQuantity && <span style={{ fontSize: 12.5, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, currency)}</span>}
+          {item.onOffer && !item.offerMinQuantity && <span style={{ fontSize: 12.5, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, item.priceCurrency || currency)}</span>}
         </div>
         {item.onOffer && item.offerMinQuantity && (
           <div style={{ marginTop: 10, background: "#FDEDEC", borderRadius: 12, padding: "9px 12px" }}>
@@ -633,7 +633,7 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
               Llevando {item.offerMinQuantity} o más
             </div>
             <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 16, color: RED_DARK }}>
-              {formatMoney(item.offerFixedPrice!, currency)} <span style={{ fontSize: 11.5, fontWeight: 700 }}>c/u</span>
+              {formatMoney(item.offerFixedPrice!, item.priceCurrency || currency)} <span style={{ fontSize: 11.5, fontWeight: 700 }}>c/u</span>
             </div>
           </div>
         )}
@@ -707,7 +707,7 @@ function NoveltyCard({ item, currency, onOpen }: { item: Item; currency: string;
         <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, margin: "0 0 6px" }}>{item.name}</h3>
         <div style={{ fontSize: 13, color: MUTED, marginBottom: 14 }}>{item.categories[0] ?? "General"}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: INK }}>{formatMoney(item.effectivePrice, currency)}</span>
+          <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: INK }}>{formatMoney(item.effectivePrice, item.priceCurrency || currency)}</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: RED }}>Ver producto →</span>
         </div>
       </div>
@@ -877,12 +877,12 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
                 <div style={{ fontSize: 11, color: item.onOffer && !item.offerMinQuantity ? "#FFD9D6" : "#9A9A9A", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>
                   Precio
                 </div>
-                <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: "#fff" }}>{formatMoney(item.effectivePrice, currency)}</div>
+                <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: "#fff" }}>{formatMoney(item.effectivePrice, item.priceCurrency || currency)}</div>
               </div>
               {item.onOffer && !item.offerMinQuantity && (
                 <div style={{ background: PAPER, borderRadius: 14, padding: "12px 16px" }}>
                   <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Precio de lista</div>
-                  <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, textDecoration: "line-through", color: MUTED }}>{formatMoney(item.salePrice, currency)}</div>
+                  <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, textDecoration: "line-through", color: MUTED }}>{formatMoney(item.salePrice, item.priceCurrency || currency)}</div>
                 </div>
               )}
               {item.onOffer && item.offerMinQuantity && (
@@ -891,7 +891,7 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
                     Oferta llevando {item.offerMinQuantity}+
                   </div>
                   <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 20, color: RED_DARK }}>
-                    {formatMoney(item.offerFixedPrice!, currency)} <span style={{ fontSize: 13 }}>c/u ({roundPercent(item.offerPercent!)}% off)</span>
+                    {formatMoney(item.offerFixedPrice!, item.priceCurrency || currency)} <span style={{ fontSize: 13 }}>c/u ({roundPercent(item.offerPercent!)}% off)</span>
                   </div>
                 </div>
               )}
@@ -906,7 +906,7 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
                         <ProductImage item={r} />
                       </div>
                       <div style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.2, marginBottom: 3 }}>{r.name}</div>
-                      <div style={{ fontSize: 12.5, color: RED, fontWeight: 700 }}>{formatMoney(r.effectivePrice, currency)}</div>
+                      <div style={{ fontSize: 12.5, color: RED, fontWeight: 700 }}>{formatMoney(r.effectivePrice, r.priceCurrency || currency)}</div>
                     </div>
                   ))}
                 </div>
@@ -1070,7 +1070,7 @@ function ProductStructuredData({ items, currency }: { items: Item[]; currency: s
     offers: {
       "@type": "Offer",
       price: p.effectivePrice,
-      priceCurrency: currency,
+      priceCurrency: p.priceCurrency || currency,
       availability: "https://schema.org/InStock",
       url: `https://batikiosko.github.io/#producto-${p.id}`,
     },

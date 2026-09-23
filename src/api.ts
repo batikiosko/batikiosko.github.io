@@ -25,6 +25,10 @@ export interface PublicCatalogProduct {
    * grilla y las tarjetas siguen mostrando únicamente `imageUrl`. */
   galleryImages: string[];
   salePrice: string;
+  /** Moneda de `salePrice` (ver Product.priceCurrency en core) — `null` = la
+   * moneda base del catálogo (`PublicCatalog.currency`). Nunca se convierte:
+   * un producto en USD se muestra en USD, sin importar la moneda base. */
+  priceCurrency: string | null;
   /** Igual a `salePrice` si no hay oferta viva, o si la oferta tiene
    * condición de cantidad (`offerMinQuantity`) — en ese caso no hay un
    * "precio actual" único para mostrar acá, hay que usar
