@@ -26,15 +26,15 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.error) return this.props.children;
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "Archivo, sans-serif", textAlign: "center" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--catalog-font-body)", textAlign: "center" }}>
         <div>
-          <p style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 22, marginBottom: 10 }}>Algo salió mal</p>
-          <p style={{ color: "#757575", marginBottom: 20, maxWidth: 380 }}>
+          <p style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 22, marginBottom: 10 }}>Algo salió mal</p>
+          <p style={{ color: "var(--catalog-muted)", marginBottom: 20, maxWidth: 380 }}>
             El catálogo tuvo un error inesperado. Recargá la página para volver a intentar.
           </p>
           <button
             onClick={() => window.location.reload()}
-            style={{ background: "#E53935", color: "#fff", border: 0, borderRadius: 999, padding: "14px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer" }}
+            style={{ background: "var(--catalog-primary)", color: "#fff", border: 0, borderRadius: 999, padding: "14px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer" }}
           >
             Recargar
           </button>

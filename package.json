@@ -1,14 +1,19 @@
 {
-  "name": "batikiosco-catalogo",
+  "name": "@contabilidad/catalog-web",
   "version": "0.1.0",
-  "description": "Catálogo digital público (vidriera) de BATIKIOSCO, conectado en vivo al catálogo real del punto de venta.",
+  "description": "Catálogo digital público (vidriera) de un negocio cliente, conectado en vivo al catálogo real del punto de venta.",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test tests/*.test.mjs",
+    "verify:demo": "node scripts/verify-demo.mjs",
+    "prerender": "node scripts/prerender.mjs",
+    "verify:browser": "node scripts/verify-browser.mjs",
+    "verify:pwa": "node scripts/verify-pwa-browser.mjs"
   },
   "dependencies": {
     "@sentry/react": "^8.55.2",
@@ -20,6 +25,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.2",
     "typescript": "^5.6.3",
-    "vite": "^5.4.8"
+    "vite": "^5.4.8",
+    "@types/node": "22.20.1"
   }
 }

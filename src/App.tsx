@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchCatalog, type PublicCatalog, type PublicCatalogProduct } from "./api.js";
+import { type PublicCatalog, type PublicCatalogProduct } from "./api.js";
+import { catalogConfig as config } from "./catalog/runtime.js";
+import { filterProducts, isNewProduct, productCurrency } from "./catalog/model.mjs";
+import { productStructuredData, safeJsonLd } from "./catalog/html.mjs";
+import { useCatalog } from "./hooks/useCatalog.js";
+import { Modal } from "./components/Modal.js";
 import { formatMoney } from "./format.js";
-import logo from "./assets/logo-batikiosco-transparent.png";
-import catalogQr from "./assets/catalog-qr.png";
+const logo = config.assets.logo;
+const catalogQr = config.assets.qr;
 import cesLogo from "./assets/ces-logo-icon.svg";
 
-const RED = "#E53935";
-const RED_DARK = "#C62828";
-const RED_SOFT = "#FF5A4F";
-const INK = "#111111";
-const MUTED = "#757575";
-const LINE = "#EDEDED";
-const PAPER = "#F5F5F5";
+const RED = config.branding.primary;
+const RED_DARK = config.branding.primaryDark;
+const RED_SOFT = config.branding.primarySoft;
+const INK = config.branding.ink;
+const MUTED = config.branding.muted;
+const LINE = config.branding.line;
+const PAPER = config.branding.paper;
 
-const NEW_WINDOW_DAYS = 21;
+
 
 /** Un solo lugar para los links de navegación — se repiten en el header y en
  * el pie de página; antes estaban duplicados a mano en los dos lugares. */
@@ -67,16 +72,7 @@ function slugify(name: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-// Cualquier imagen puesta en src/assets/categories/<slug-de-la-categoria>.(jpg|jpeg|png|webp)
-// se usa automáticamente para esa categoría — no hace falta tocar código para agregarlas.
-const categoryImageModules = import.meta.glob<{ default: string }>("./assets/categories/*.{jpg,jpeg,png,webp}", {
-  eager: true,
-});
-const CATEGORY_IMAGES: Record<string, string> = {};
-for (const path in categoryImageModules) {
-  const fileName = path.split("/").pop()!.replace(/\.[^.]+$/, "");
-  CATEGORY_IMAGES[fileName] = categoryImageModules[path]!.default;
-}
+const CATEGORY_IMAGES = config.categoryImages;
 
 function categoryImage(name: string): string | null {
   return CATEGORY_IMAGES[slugify(name)] ?? null;
@@ -110,11 +106,11 @@ function PercentBadge({ percent, size = "lg" }: { percent: string; size?: "lg" |
         alignItems: "center",
         justifyContent: "center",
         transform: "rotate(8deg)",
-        boxShadow: "0 8px 20px rgba(229,57,53,.45)",
+        boxShadow: "0 8px 20px rgba(var(--catalog-primary-rgb),.45)",
         border: "2.5px solid #fff",
       }}
     >
-      <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: big ? 20 : 15, lineHeight: 1 }}>-{roundPercent(percent)}%</span>
+      <span style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: big ? 20 : 15, lineHeight: 1 }}>-{roundPercent(percent)}%</span>
     </div>
   );
 }
@@ -125,7 +121,7 @@ interface Item extends PublicCatalogProduct {
 }
 
 function enrich(p: PublicCatalogProduct): Item {
-  const isNew = Date.now() - new Date(p.createdAt).getTime() < NEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const isNew = isNewProduct(p);
   return { ...p, isNew, tag: p.onOffer ? "OFERTA" : isNew ? "NUEVO" : null };
 }
 
@@ -141,7 +137,7 @@ function chipStyle(active: boolean): React.CSSProperties {
     background: active ? RED : PAPER,
     color: active ? "#fff" : INK,
     border: active ? `1.5px solid ${RED}` : `1.5px solid ${LINE}`,
-    boxShadow: active ? "0 14px 30px rgba(229,57,53,.28)" : "none",
+    boxShadow: active ? "0 14px 30px rgba(var(--catalog-primary-rgb),.28)" : "none",
     transition: "background .2s, color .2s, box-shadow .2s",
   };
 }
@@ -151,20 +147,22 @@ function categoryCardStyle(active: boolean): React.CSSProperties {
     cursor: "pointer",
     padding: "22px 18px",
     borderRadius: 22,
-    fontFamily: "Archivo, sans-serif",
+    fontFamily: "var(--catalog-font-body)",
     background: active ? RED : PAPER,
     color: active ? "#fff" : INK,
     border: active ? `1.5px solid ${RED}` : `1.5px solid ${LINE}`,
-    boxShadow: active ? "0 14px 30px rgba(229,57,53,.28)" : "none",
+    boxShadow: active ? "0 14px 30px rgba(var(--catalog-primary-rgb),.28)" : "none",
     transition: "background .2s, color .2s, box-shadow .2s",
   };
 }
 
 function ProductImage({ item, dark = false }: { item: Item; dark?: boolean }) {
-  if (item.imageUrl) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (item.imageUrl && failedUrl !== item.imageUrl) {
     return (
       <img
         src={item.imageUrl}
+        onError={() => setFailedUrl(item.imageUrl)}
         alt={item.name}
         loading="lazy"
         decoding="async"
@@ -174,6 +172,9 @@ function ProductImage({ item, dark = false }: { item: Item; dark?: boolean }) {
   }
   return (
     <div
+      className="bk-product-placeholder"
+      role="img"
+      aria-label={`Sin imagen: ${item.name}`}
       style={{
         position: "absolute",
         inset: 0,
@@ -219,7 +220,7 @@ function Header({ query, onQuery, onSearch }: { query: string; onQuery: (v: stri
     <header style={{ position: "sticky", top: 0, zIndex: 60, background: "rgba(255,255,255,.92)", backdropFilter: "blur(14px)", borderBottom: `1px solid ${LINE}` }}>
       <div className="bk-header-inner" style={{ maxWidth: 1280, margin: "0 auto", padding: "14px 22px", display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
         <a href="#inicio" className="bk-logo" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <img src={logo} alt="BATIKIOSCO" style={{ height: 56, width: "auto", display: "block" }} />
+          <img src={logo} alt={config.business.displayName} style={{ height: 56, width: "auto", display: "block" }} />
         </a>
         <nav className="bk-nav" style={{ display: "flex", gap: 6, marginLeft: "auto", flexWrap: "wrap" }}>
           {NAV_LINKS.map(([href, label]) => (
@@ -237,11 +238,12 @@ function Header({ query, onQuery, onSearch }: { query: string; onQuery: (v: stri
           style={{ display: "flex", alignItems: "center", gap: 10, background: PAPER, border: `1.5px solid ${LINE}`, borderRadius: 999, padding: "6px 8px 6px 16px", minWidth: 230 }}
         >
           <input
-            type="text"
+            type="search"
+            aria-label="Buscar productos"
             placeholder="¿Qué estás buscando?"
             value={query}
             onChange={(e) => onQuery(e.target.value)}
-            style={{ border: 0, outline: 0, background: "transparent", fontSize: 14, color: INK, width: "100%" }}
+            style={{ border: 0, background: "transparent", fontSize: 14, color: INK, width: "100%" }}
           />
           <button
             type="submit"
@@ -276,22 +278,22 @@ function Hero({ catalog, offerCount, categoryCount }: { catalog: PublicCatalog; 
     <section id="inicio" style={{ position: "relative", background: PAPER, overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(#DCDCDC 1.1px, transparent 1.1px)", backgroundSize: "22px 22px", opacity: 0.7 }} />
       <div style={{ position: "absolute", right: -140, top: -140, width: 520, height: 520, borderRadius: "50%", background: RED, opacity: 0.09 }} />
-      <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "clamp(48px,7vw,96px) 22px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 48, alignItems: "center" }}>
+      <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "clamp(48px,7vw,96px) 22px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,320px),1fr))", gap: 48, alignItems: "center" }}>
         <div style={{ animation: "bkRise .7s cubic-bezier(.2,.7,.3,1) both" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: INK, color: "#fff", borderRadius: 999, padding: "8px 16px", fontSize: 12, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", marginBottom: 22 }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: RED_SOFT, display: "inline-block" }} />
             Catálogo digital
           </div>
-          <h1 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(40px,6.2vw,76px)", lineHeight: 1.02, letterSpacing: "-.02em", margin: "0 0 20px" }}>
-            Todo lo que te gusta,
+          <h1 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: "clamp(40px,6.2vw,76px)", lineHeight: 1.02, letterSpacing: "-.02em", margin: "0 0 20px" }}>
+            {config.texts.heroTitle}
             <br />
-            <span style={{ color: RED }}>en un solo lugar.</span>
+            <span style={{ color: RED }}>{config.texts.heroHighlight}</span>
           </h1>
           <p style={{ fontSize: "clamp(16px,1.5vw,20px)", color: MUTED, lineHeight: 1.6, margin: "0 0 34px", maxWidth: 520 }}>
-            Descubre nuestros productos, novedades y las mejores ofertas.
+            {config.texts.heroDescription}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "center" }}>
-            <a href="#productos" style={{ display: "inline-flex", alignItems: "center", gap: 12, background: RED, color: "#fff", fontWeight: 700, fontSize: 16, padding: "17px 30px", borderRadius: 999, boxShadow: "0 12px 30px rgba(229,57,53,.32)" }}>
+            <a href="#productos" style={{ display: "inline-flex", alignItems: "center", gap: 12, background: RED, color: "#fff", fontWeight: 700, fontSize: 16, padding: "17px 30px", borderRadius: 999, boxShadow: "0 12px 30px rgba(var(--catalog-primary-rgb),.32)" }}>
               Ver catálogo <span>→</span>
             </a>
             <a href="#ofertas" style={{ display: "inline-flex", alignItems: "center", gap: 10, color: INK, fontWeight: 700, fontSize: 16, padding: "17px 26px", borderRadius: 999, border: `1.5px solid ${INK}` }}>
@@ -300,24 +302,24 @@ function Hero({ catalog, offerCount, categoryCount }: { catalog: PublicCatalog; 
           </div>
           <div style={{ display: "flex", gap: 36, marginTop: 44, flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 30, color: INK, lineHeight: 1 }}>{catalog.products.length}</div>
+              <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 30, color: INK, lineHeight: 1 }}>{catalog.products.length}</div>
               <div style={{ fontSize: 13, color: MUTED, fontWeight: 500 }}>productos en catálogo</div>
             </div>
             <div>
-              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 30, color: INK, lineHeight: 1 }}>{categoryCount}</div>
+              <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 30, color: INK, lineHeight: 1 }}>{categoryCount}</div>
               <div style={{ fontSize: 13, color: MUTED, fontWeight: 500 }}>categorías</div>
             </div>
             <div>
-              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 30, color: RED, lineHeight: 1 }}>{offerCount}</div>
+              <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 30, color: RED, lineHeight: 1 }}>{offerCount}</div>
               <div style={{ fontSize: 13, color: MUTED, fontWeight: 500 }}>ofertas activas</div>
             </div>
           </div>
         </div>
         <div style={{ position: "relative", animation: "bkFade .9s ease .15s both" }}>
           <div style={{ position: "relative", background: INK, borderRadius: 34, padding: 26, boxShadow: "0 34px 80px rgba(17,17,17,.28)" }}>
-            <img src={logo} alt="BATIKIOSCO" loading="eager" style={{ width: "100%", display: "block", borderRadius: 22, background: "#fff" }} />
-            <div style={{ position: "absolute", left: -16, bottom: 34, background: RED, color: "#fff", fontWeight: 800, fontFamily: "'Baloo 2', cursive", fontSize: 18, padding: "12px 20px", borderRadius: 14, boxShadow: "0 14px 30px rgba(229,57,53,.4)", transform: "rotate(-4deg)" }}>
-              Tu kiosco, ahora digital
+            <img src={logo} alt={config.business.displayName} loading="eager" style={{ width: "100%", display: "block", borderRadius: 22, background: "#fff" }} />
+            <div style={{ position: "absolute", left: -16, bottom: 34, background: RED, color: "#fff", fontWeight: 800, fontFamily: "var(--catalog-font-heading)", fontSize: 18, padding: "12px 20px", borderRadius: 14, boxShadow: "0 14px 30px rgba(var(--catalog-primary-rgb),.4)", transform: "rotate(-4deg)" }}>
+              {config.texts.heroBadge}
             </div>
           </div>
         </div>
@@ -326,8 +328,8 @@ function Hero({ catalog, offerCount, categoryCount }: { catalog: PublicCatalog; 
   );
 }
 
-const BUSINESS_ADDRESS = "Máximo Gómez, esquina entre calle General Carrillo y Juan Alberto Díaz, Zulueta";
-const BUSINESS_HOURS = "Lunes a domingo, de 8:00 AM a 7:00 PM";
+const BUSINESS_ADDRESS = config.business.address;
+const BUSINESS_HOURS = config.business.hours;
 
 const PinIcon = (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -353,10 +355,7 @@ const ShareIcon = (
   </svg>
 );
 
-// Es siempre este dominio fijo (GitHub Pages), no depende de la compañía
-// activa ni de ningún dato del catálogo — mismo criterio que la URL fija del
-// formulario de alta en el escritorio (ClientIntake.tsx).
-const CATALOG_URL = "https://batikiosko.github.io";
+const CATALOG_URL = config.publicUrl;
 
 /** Debajo del QR: el mismo link en texto (para copiar en una compu, donde no
  * hay cámara a mano) más un botón de compartir — usa el share nativo del
@@ -369,7 +368,7 @@ function ShareCatalog() {
   const share = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Catálogo BATIKIOSCO", text: "Mirá el catálogo de BATIKIOSCO", url: CATALOG_URL });
+        await navigator.share({ title: `Catálogo ${config.business.displayName}`, text: `Mirá el catálogo de ${config.business.displayName}`, url: CATALOG_URL });
       } catch {
         // El usuario canceló el share nativo (o no hay nada roto): no hay
         // nada que avisar acá.
@@ -441,27 +440,27 @@ function ShareCatalog() {
 function VisitInfo() {
   return (
     <section style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(40px,5vw,68px) 22px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 18 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,230px),1fr))", gap: 18 }}>
         <div style={{ background: PAPER, borderRadius: 20, padding: 26, border: `1px solid ${LINE}` }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: RED, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
             {PinIcon}
           </div>
-          <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, marginBottom: 6 }}>Dirección</div>
+          <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 19, marginBottom: 6 }}>Dirección</div>
           <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.55 }}>{BUSINESS_ADDRESS}</div>
         </div>
         <div style={{ background: PAPER, borderRadius: 20, padding: 26, border: `1px solid ${LINE}` }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, background: INK, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
             {ClockIcon}
           </div>
-          <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, marginBottom: 6 }}>Horario</div>
+          <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 19, marginBottom: 6 }}>Horario</div>
           <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.55 }}>{BUSINESS_HOURS}</div>
         </div>
         <div style={{ background: INK, borderRadius: 20, padding: 26, border: `1px solid ${LINE}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-            <img src={catalogQr} alt="Código QR del catálogo" style={{ width: 82, height: 82, borderRadius: 12, background: "#fff", padding: 4, flexShrink: 0 }} />
+            {catalogQr && <img src={catalogQr} alt="Código QR del catálogo" style={{ width: 82, height: 82, borderRadius: 12, background: "#fff", padding: 4, flexShrink: 0 }} />}
             <div>
-              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 18, color: "#fff", marginBottom: 6 }}>Escaneá y compartí</div>
-              <div style={{ fontSize: 13, color: "#9A9A9A", lineHeight: 1.5 }}>Este código lleva directo a este catálogo.</div>
+              <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 18, color: "#fff", marginBottom: 6 }}>{catalogQr ? "Escaneá y compartí" : "Compartí el catálogo"}</div>
+              <div style={{ fontSize: 13, color: "#9A9A9A", lineHeight: 1.5 }}>{catalogQr ? "Este código lleva directo a este catálogo." : "Compartí el enlace a este catálogo."}</div>
             </div>
           </div>
           <ShareCatalog />
@@ -485,17 +484,17 @@ function Categories({
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 26 }}>
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: RED, marginBottom: 10 }}>Explora</div>
-          <h2 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(30px,4vw,46px)", margin: 0, letterSpacing: "-.015em" }}>Categorías</h2>
+          <h2 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: "clamp(30px,4vw,46px)", margin: 0, letterSpacing: "-.015em" }}>Categorías</h2>
         </div>
         <div style={{ fontSize: 14, color: MUTED, maxWidth: 360 }}>Toca una o más categorías para combinarlas y filtrar el catálogo.</div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,150px),1fr))", gap: 14 }}>
         {categories.map((c) => {
           const img = categoryImage(c.name);
           const active = selected.has(c.name);
           return (
-            <div key={c.name} onClick={() => onToggle(c.name)} style={categoryCardStyle(active)}>
-              <div
+            <button type="button" key={c.name} aria-pressed={active} onClick={() => onToggle(c.name)} style={{ ...categoryCardStyle(active), textAlign: "left" }}>
+              <span
                 style={{
                   width: 48,
                   height: 48,
@@ -514,10 +513,10 @@ function Categories({
                 ) : (
                   <span style={{ fontSize: 26 }}>{categoryIcon(c.name)}</span>
                 )}
-              </div>
-              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{c.name}</div>
-              <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.7, marginTop: 4 }}>{c.count} productos</div>
-            </div>
+              </span>
+              <span style={{ display: "block", fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 17, lineHeight: 1.2 }}>{c.name}</span>
+              <span style={{ display: "block", fontSize: 12, fontWeight: 500, opacity: 0.7, marginTop: 4 }}>{c.count} productos</span>
+            </button>
           );
         })}
       </div>
@@ -525,13 +524,17 @@ function Categories({
   );
 }
 
+function CardAction({ name, onOpen }: { name: string; onOpen: () => void }) {
+  return <button type="button" className="bk-card-action" aria-label={`Ver producto: ${name}`} onClick={onOpen} />;
+}
+
 function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; onOpen: () => void }) {
   const conditioned = !!item.offerMinQuantity;
   return (
     <article
-      onClick={onOpen}
-      style={{ background: "#1A1A1A", border: `2px solid ${RED}`, borderRadius: 24, overflow: "hidden", cursor: "pointer", boxShadow: "0 14px 34px rgba(229,57,53,.22)" }}
+      style={{ position: "relative", background: "#1A1A1A", border: `2px solid ${RED}`, borderRadius: 24, overflow: "hidden", cursor: "pointer", boxShadow: "0 14px 34px rgba(var(--catalog-primary-rgb),.22)" }}
     >
+      <CardAction name={item.name} onOpen={onOpen} />
       <div style={{ position: "relative", aspectRatio: "4/3", background: PAPER }}>
         <ProductImage item={item} dark />
         <div style={{ position: "absolute", top: 14, left: 14, background: RED, color: "#fff", fontSize: 11.5, fontWeight: 800, letterSpacing: ".12em", padding: "7px 13px", borderRadius: 999 }}>🔥 OFERTA</div>
@@ -539,27 +542,27 @@ function OfferCard({ item, currency, onOpen }: { item: Item; currency: string; o
       </div>
       <div style={{ padding: 20 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }}>{item.categories[0] ?? "General"}</div>
-        <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 22, color: "#fff", lineHeight: 1.15, margin: "0 0 8px" }}>{item.name}</h3>
+        <h3 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 22, color: "#fff", lineHeight: 1.15, margin: "0 0 8px" }}>{item.name}</h3>
         <DetailLines lines={item.catalogDetails} color="#9A9A9A" marginBottom={16} />
         {conditioned ? (
           <>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 26, color: "#fff" }}>{formatMoney(item.salePrice, item.priceCurrency || currency)}</span>
+              <span style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 26, color: "#fff" }}>{formatMoney(item.salePrice, productCurrency(item, currency))}</span>
               <span style={{ fontSize: 12.5, color: "#9A9A9A" }}>precio normal</span>
             </div>
             <div style={{ marginTop: 10, background: RED, borderRadius: 14, padding: "12px 14px" }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "#FFD9D6", marginBottom: 3 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--catalog-offer-text)", marginBottom: 3 }}>
                 Llevando {item.offerMinQuantity} o más
               </div>
-              <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 24, color: "#fff" }}>
-                {formatMoney(item.offerFixedPrice!, item.priceCurrency || currency)} <span style={{ fontSize: 14, fontWeight: 700 }}>c/u</span>
+              <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 24, color: "#fff" }}>
+                {formatMoney(item.offerFixedPrice!, productCurrency(item, currency))} <span style={{ fontSize: 14, fontWeight: 700 }}>c/u</span>
               </div>
             </div>
           </>
         ) : (
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 34, color: RED }}>{formatMoney(item.effectivePrice, item.priceCurrency || currency)}</span>
-            <span style={{ fontSize: 16, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, item.priceCurrency || currency)}</span>
+            <span style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 34, color: RED }}>{formatMoney(item.effectivePrice, productCurrency(item, currency))}</span>
+            <span style={{ fontSize: 16, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, productCurrency(item, currency))}</span>
           </div>
         )}
       </div>
@@ -576,11 +579,11 @@ function Offers({ items, currency, onOpen }: { items: Item[]; currency: string; 
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 38 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: RED_SOFT, marginBottom: 10 }}>Esta semana</div>
-            <h2 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(30px,4.4vw,52px)", margin: 0, color: "#fff", letterSpacing: "-.015em" }}>🔥 Ofertas destacadas</h2>
+            <h2 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: "clamp(30px,4.4vw,52px)", margin: 0, color: "#fff", letterSpacing: "-.015em" }}>🔥 Ofertas destacadas</h2>
           </div>
-          <div style={{ fontSize: 14, color: "#9A9A9A", maxWidth: 340 }}>Precios especiales mientras dure la promoción en el kiosco.</div>
+          <div style={{ fontSize: 14, color: "#9A9A9A", maxWidth: 340 }}>{config.texts.offersDescription}</div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,260px),1fr))", gap: 20 }}>
           {items.map((p) => (
             <OfferCard key={p.id} item={p} currency={currency} onOpen={() => onOpen(p)} />
           ))}
@@ -594,16 +597,17 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
   return (
     <article
       id={`producto-${item.id}`}
-      onClick={onOpen}
       style={{
+        position: "relative",
         background: "#fff",
         border: item.onOffer ? `2px solid ${RED}` : `1px solid ${LINE}`,
         borderRadius: 24,
         overflow: "hidden",
         cursor: "pointer",
-        boxShadow: item.onOffer ? "0 10px 26px rgba(229,57,53,.16)" : undefined,
+        boxShadow: item.onOffer ? "0 10px 26px rgba(var(--catalog-primary-rgb),.16)" : undefined,
       }}
     >
+      <CardAction name={item.name} onOpen={onOpen} />
       <div style={{ position: "relative", aspectRatio: "1/1", background: PAPER }}>
         <ProductImage item={item} />
         {item.onOffer ? (
@@ -619,21 +623,21 @@ function ProductCard({ item, currency, onOpen }: { item: Item; currency: string;
       </div>
       <div style={{ padding: "18px 18px 20px" }}>
         <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: RED, marginBottom: 8 }}>{item.categories[0] ?? "General"}</div>
-        <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, margin: "0 0 7px" }}>{item.name}</h3>
+        <h3 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 19, lineHeight: 1.15, margin: "0 0 7px" }}>{item.name}</h3>
         <DetailLines lines={item.catalogDetails} color={MUTED} marginBottom={14} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
-          <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: item.onOffer ? 27 : 24, color: item.onOffer && !item.offerMinQuantity ? RED : INK }}>
-            {formatMoney(item.effectivePrice, item.priceCurrency || currency)}
+          <span style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: item.onOffer ? 27 : 24, color: item.onOffer && !item.offerMinQuantity ? RED : INK }}>
+            {formatMoney(item.effectivePrice, productCurrency(item, currency))}
           </span>
-          {item.onOffer && !item.offerMinQuantity && <span style={{ fontSize: 12.5, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, item.priceCurrency || currency)}</span>}
+          {item.onOffer && !item.offerMinQuantity && <span style={{ fontSize: 12.5, color: MUTED, textDecoration: "line-through" }}>{formatMoney(item.salePrice, productCurrency(item, currency))}</span>}
         </div>
         {item.onOffer && item.offerMinQuantity && (
-          <div style={{ marginTop: 10, background: "#FDEDEC", borderRadius: 12, padding: "9px 12px" }}>
+          <div style={{ marginTop: 10, background: "var(--catalog-offer-tint)", borderRadius: 12, padding: "9px 12px" }}>
             <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: RED_DARK, marginBottom: 2 }}>
               Llevando {item.offerMinQuantity} o más
             </div>
-            <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 16, color: RED_DARK }}>
-              {formatMoney(item.offerFixedPrice!, item.priceCurrency || currency)} <span style={{ fontSize: 11.5, fontWeight: 700 }}>c/u</span>
+            <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 16, color: RED_DARK }}>
+              {formatMoney(item.offerFixedPrice!, productCurrency(item, currency))} <span style={{ fontSize: 11.5, fontWeight: 700 }}>c/u</span>
             </div>
           </div>
         )}
@@ -666,27 +670,27 @@ function ProductGrid({
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 14 }}>
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: RED, marginBottom: 10 }}>Catálogo</div>
-          <h2 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(30px,4.4vw,52px)", margin: 0, letterSpacing: "-.015em" }}>Productos destacados</h2>
+          <h2 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: "clamp(30px,4.4vw,52px)", margin: 0, letterSpacing: "-.015em" }}>Productos destacados</h2>
         </div>
         <div style={{ fontSize: 15, color: MUTED, fontWeight: 500 }}>{resultLabel}</div>
       </div>
       <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "18px 0 26px" }}>
-        <div onClick={onClearCategories} style={chipStyle(selectedCategories.size === 0)}>
+        <button type="button" aria-pressed={selectedCategories.size === 0} onClick={onClearCategories} style={chipStyle(selectedCategories.size === 0)}>
           Todas
-        </div>
+        </button>
         {categoryNames.map((c) => (
-          <div key={c} onClick={() => onToggleCategory(c)} style={chipStyle(selectedCategories.has(c))}>
+          <button type="button" key={c} aria-pressed={selectedCategories.has(c)} onClick={() => onToggleCategory(c)} style={chipStyle(selectedCategories.has(c))}>
             {c}
-          </div>
+          </button>
         ))}
       </div>
       {visible.length === 0 ? (
         <div style={{ padding: "70px 20px", textAlign: "center", background: PAPER, borderRadius: 24 }}>
-          <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 24, marginBottom: 8 }}>Sin resultados</div>
+          <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 24, marginBottom: 8 }}>Sin resultados</div>
           <div style={{ fontSize: 15, color: MUTED }}>Probá con otra categoría o cambiá la búsqueda.</div>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 22 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,240px),1fr))", gap: 22 }}>
           {visible.map((p) => (
             <ProductCard key={p.id} item={p} currency={currency} onOpen={() => onOpen(p)} />
           ))}
@@ -698,16 +702,17 @@ function ProductGrid({
 
 function NoveltyCard({ item, currency, onOpen }: { item: Item; currency: string; onOpen: () => void }) {
   return (
-    <article onClick={onOpen} style={{ flex: "0 0 270px", scrollSnapAlign: "start", background: "#fff", border: `1px solid ${LINE}`, borderRadius: 24, overflow: "hidden", cursor: "pointer" }}>
+    <article style={{ position: "relative", flex: "0 0 270px", scrollSnapAlign: "start", background: "#fff", border: `1px solid ${LINE}`, borderRadius: 24, overflow: "hidden", cursor: "pointer" }}>
+      <CardAction name={item.name} onOpen={onOpen} />
       <div style={{ position: "relative", aspectRatio: "4/3", background: "#F7F7F7" }}>
         <ProductImage item={item} />
         <div style={{ position: "absolute", top: 14, left: 14, background: RED, color: "#fff", fontSize: 10.5, fontWeight: 800, letterSpacing: ".12em", padding: "6px 11px", borderRadius: 999 }}>NUEVO</div>
       </div>
       <div style={{ padding: 18 }}>
-        <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.15, margin: "0 0 6px" }}>{item.name}</h3>
+        <h3 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 19, lineHeight: 1.15, margin: "0 0 6px" }}>{item.name}</h3>
         <div style={{ fontSize: 13, color: MUTED, marginBottom: 14 }}>{item.categories[0] ?? "General"}</div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: INK }}>{formatMoney(item.effectivePrice, item.priceCurrency || currency)}</span>
+          <span style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 22, color: INK }}>{formatMoney(item.effectivePrice, productCurrency(item, currency))}</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: RED }}>Ver producto →</span>
         </div>
       </div>
@@ -723,9 +728,9 @@ function Novelties({ items, currency, onOpen }: { items: Item[]; currency: strin
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap", marginBottom: 34 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: RED, marginBottom: 10 }}>Recién llegado</div>
-            <h2 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(30px,4.4vw,52px)", margin: 0, letterSpacing: "-.015em" }}>Nuevos productos</h2>
+            <h2 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: "clamp(30px,4.4vw,52px)", margin: 0, letterSpacing: "-.015em" }}>Nuevos productos</h2>
           </div>
-          <div style={{ fontSize: 14, color: MUTED, maxWidth: 340 }}>Lo último que llegó al mostrador. Desliza para ver más.</div>
+          <div style={{ fontSize: 14, color: MUTED, maxWidth: 340 }}>{config.texts.noveltiesDescription}</div>
         </div>
         <div style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" }}>
           {items.map((p) => (
@@ -771,6 +776,7 @@ function ProductGallery({ item }: { item: Item }) {
     () => [item.imageUrl, ...item.galleryImages].filter((u): u is string => Boolean(u)),
     [item],
   );
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [index, setIndex] = useState(0);
   useEffect(() => setIndex(0), [item.id]);
   const touchStartX = useRef<number | null>(null);
@@ -794,10 +800,10 @@ function ProductGallery({ item }: { item: Item }) {
         onTouchEnd={onTouchEnd}
         style={{ position: "relative", aspectRatio: "1/1", borderRadius: 22, background: "#EFEFEF", overflow: "hidden", touchAction: "pan-y" }}
       >
-        {images.length > 0 ? (
-          <img src={images[index]} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+        {images[index] && !failedImages.has(images[index]) ? (
+          <img key={images[index]} src={images[index]} alt={item.name} onError={() => setFailedImages((previous) => new Set(previous).add(images[index]!))} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
         ) : (
-          <ProductImage item={item} />
+          <ProductImage item={{ ...item, imageUrl: null }} />
         )}
         {item.onOffer ? (
           <div style={{ position: "absolute", top: 16, left: 16, background: RED, color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: ".12em", padding: "6px 12px", borderRadius: 999 }}>🔥 OFERTA</div>
@@ -833,11 +839,14 @@ function ProductGallery({ item }: { item: Item }) {
       {images.length > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 12 }}>
           {images.map((_, i) => (
-            <div
+            <button type="button"
               key={i}
+              aria-label={`Ver foto ${i + 1}`}
+              aria-pressed={i === index}
               onClick={() => setIndex(i)}
               style={{
                 cursor: "pointer",
+                border: 0, padding: 0,
                 width: i === index ? 20 : 7,
                 height: 7,
                 borderRadius: 999,
@@ -854,44 +863,40 @@ function ProductGallery({ item }: { item: Item }) {
 
 function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Item; related: Item[]; currency: string; onClose: () => void; onOpen: (p: Item) => void }) {
   return (
-    <div
-      onClick={onClose}
-      style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(17,17,17,.62)", backdropFilter: "blur(6px)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: 24, overflowY: "auto" }}
-    >
-      <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 30, maxWidth: 960, width: "100%", margin: "auto", overflow: "hidden", boxShadow: "0 40px 90px rgba(0,0,0,.4)" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))" }}>
-          <div style={{ background: PAPER, padding: 26 }}>
+    <Modal onClose={onClose} labelledBy="product-detail-title">
+        <div className="bk-modal-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))" }}>
+          <div className="bk-modal-image" style={{ background: PAPER, padding: 26 }}>
             <ProductGallery item={item} />
           </div>
-          <div style={{ padding: 32 }}>
+          <div className="bk-modal-content" style={{ padding: 32 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: RED }}>{item.categories[0] ?? "General"}</div>
-              <div onClick={onClose} style={{ width: 34, height: 34, borderRadius: "50%", background: PAPER, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, color: INK, flexShrink: 0 }}>
+              <button type="button" data-modal-initial-focus aria-label="Cerrar detalle" onClick={onClose} style={{ border: 0, padding: 0, width: 34, height: 34, borderRadius: "50%", background: PAPER, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, color: INK, flexShrink: 0 }}>
                 ×
-              </div>
+              </button>
             </div>
-            <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(26px,3.4vw,38px)", lineHeight: 1.05, margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "-.01em" }}>{item.name}</h3>
+            <h3 id="product-detail-title" tabIndex={-1} style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: "clamp(26px,3.4vw,38px)", lineHeight: 1.05, margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "-.01em" }}>{item.name}</h3>
             <DetailLines lines={item.catalogDetails} color={MUTED} fontSize={16} marginBottom={22} />
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 22 }}>
               <div style={{ background: item.onOffer && !item.offerMinQuantity ? RED : INK, borderRadius: 14, padding: "12px 16px" }}>
-                <div style={{ fontSize: 11, color: item.onOffer && !item.offerMinQuantity ? "#FFD9D6" : "#9A9A9A", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>
+                <div style={{ fontSize: 11, color: item.onOffer && !item.offerMinQuantity ? "var(--catalog-offer-text)" : "#9A9A9A", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>
                   Precio
                 </div>
-                <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 22, color: "#fff" }}>{formatMoney(item.effectivePrice, item.priceCurrency || currency)}</div>
+                <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 22, color: "#fff" }}>{formatMoney(item.effectivePrice, productCurrency(item, currency))}</div>
               </div>
               {item.onOffer && !item.offerMinQuantity && (
                 <div style={{ background: PAPER, borderRadius: 14, padding: "12px 16px" }}>
                   <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Precio de lista</div>
-                  <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, textDecoration: "line-through", color: MUTED }}>{formatMoney(item.salePrice, item.priceCurrency || currency)}</div>
+                  <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 17, textDecoration: "line-through", color: MUTED }}>{formatMoney(item.salePrice, productCurrency(item, currency))}</div>
                 </div>
               )}
               {item.onOffer && item.offerMinQuantity && (
-                <div style={{ background: "#FDEDEC", borderRadius: 14, padding: "12px 16px" }}>
+                <div style={{ background: "var(--catalog-offer-tint)", borderRadius: 14, padding: "12px 16px" }}>
                   <div style={{ fontSize: 11, color: RED_DARK, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>
                     Oferta llevando {item.offerMinQuantity}+
                   </div>
-                  <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: 20, color: RED_DARK }}>
-                    {formatMoney(item.offerFixedPrice!, item.priceCurrency || currency)} <span style={{ fontSize: 13 }}>c/u ({roundPercent(item.offerPercent!)}% off)</span>
+                  <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: 20, color: RED_DARK }}>
+                    {formatMoney(item.offerFixedPrice!, productCurrency(item, currency))} <span style={{ fontSize: 13 }}>c/u{item.offerPercent ? ` (${roundPercent(item.offerPercent)}% off)` : ""}</span>
                   </div>
                 </div>
               )}
@@ -901,12 +906,13 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
                 <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>Productos relacionados</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(110px,1fr))", gap: 10 }}>
                   {related.map((r) => (
-                    <div key={r.id} onClick={() => onOpen(r)} style={{ cursor: "pointer", border: `1px solid ${LINE}`, borderRadius: 16, padding: 10 }}>
+                    <div key={r.id} style={{ position: "relative", cursor: "pointer", border: `1px solid ${LINE}`, borderRadius: 16, padding: 10 }}>
+                      <CardAction name={r.name} onOpen={() => onOpen(r)} />
                       <div style={{ position: "relative", aspectRatio: "1/1", borderRadius: 10, background: PAPER, marginBottom: 8, overflow: "hidden" }}>
                         <ProductImage item={r} />
                       </div>
                       <div style={{ fontSize: 12.5, fontWeight: 700, lineHeight: 1.2, marginBottom: 3 }}>{r.name}</div>
-                      <div style={{ fontSize: 12.5, color: RED, fontWeight: 700 }}>{formatMoney(r.effectivePrice, r.priceCurrency || currency)}</div>
+                      <div style={{ fontSize: 12.5, color: RED, fontWeight: 700 }}>{formatMoney(r.effectivePrice, productCurrency(r, currency))}</div>
                     </div>
                   ))}
                 </div>
@@ -914,18 +920,17 @@ function ProductDetail({ item, related, currency, onClose, onOpen }: { item: Ite
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 
 function Footer() {
   return (
     <footer style={{ background: INK, color: "#fff" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(50px,6vw,80px) 22px 30px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 40 }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(50px,6vw,80px) 22px 30px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 40 }}>
         <div>
-          <img src={logo} alt="BATIKIOSCO" style={{ height: 96, width: "auto", display: "block", borderRadius: 14, background: "#fff", padding: 6, marginBottom: 18 }} />
-          <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 19, lineHeight: 1.25, maxWidth: 280 }}>Todo lo que te gusta, en un solo lugar.</div>
+          <img src={logo} alt={config.business.displayName} style={{ height: 96, width: "auto", display: "block", borderRadius: 14, background: "#fff", padding: 6, marginBottom: 18 }} />
+          <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 19, lineHeight: 1.25, maxWidth: 280 }}>{config.texts.tagline}</div>
         </div>
         <div>
           <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: MUTED, marginBottom: 16 }}>Navegación</div>
@@ -940,21 +945,20 @@ function Footer() {
         <div>
           <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: MUTED, marginBottom: 16 }}>Contacto</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-            <span style={{ fontSize: 15, color: "#fff", fontWeight: 500 }}>WhatsApp</span>
-            <span style={{ fontSize: 15, color: "#fff", fontWeight: 500 }}>Instagram</span>
-            <span style={{ fontSize: 15, color: "#fff", fontWeight: 500 }}>Facebook</span>
+            {config.business.contacts.map((contact) => <a key={contact.url} href={contact.url} style={{ fontSize: 15, color: "#fff", fontWeight: 500 }}>{contact.label}</a>)}
+            {config.business.contacts.length === 0 && ["WhatsApp", "Instagram", "Facebook"].map((label) => <span key={label} style={{ fontSize: 15, color: "#fff", fontWeight: 500 }}>{label}</span>)}
           </div>
-          <div style={{ fontSize: 13, color: MUTED, marginTop: 16, lineHeight: 1.5 }}>Espacio reservado para los enlaces oficiales del kiosco.</div>
+          <div style={{ fontSize: 13, color: MUTED, marginTop: 16, lineHeight: 1.5 }}>{config.business.contactPlaceholder}</div>
         </div>
         <div>
           <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: MUTED, marginBottom: 16 }}>Catálogo</div>
           <div style={{ fontSize: 14, color: "#9A9A9A", lineHeight: 1.6 }}>
-            Este es un catálogo informativo. Los precios se muestran como referencia y las compras se realizan directamente en el kiosco.
+            {config.texts.catalogNotice}
           </div>
         </div>
       </div>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: 22, borderTop: "1px solid #262626", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 13, color: MUTED }}>© {new Date().getFullYear()} BATIKIOSCO. Todos los derechos reservados.</span>
+        <span style={{ fontSize: 13, color: MUTED }}>© {new Date().getFullYear()} {config.business.displayName}. Todos los derechos reservados.</span>
         <span style={{ fontSize: 13, color: MUTED }}>Catálogo digital · No es tienda en línea</span>
         <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: MUTED }}>
           <img src={cesLogo} alt="Cuban Enterprise Solutions" style={{ width: 18, height: 18, display: "block" }} />
@@ -966,7 +970,7 @@ function Footer() {
 }
 
 function MarqueeBar() {
-  const items = ["Catálogo digital", "Precios actualizados", "Nuevos sabores cada semana", "Tu kiosco de barrio"];
+  const items = config.texts.marquee;
   return (
     <div style={{ background: INK, color: "#fff", fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 600, padding: "9px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
       <div style={{ display: "inline-flex", gap: 44, animation: "bkMarquee 26s linear infinite" }}>
@@ -982,59 +986,31 @@ function MarqueeBar() {
   );
 }
 
-function CenteredMessage({ title, text }: { title: string; text: string }) {
+function CenteredMessage({ title, text, onRetry, loading }: { title: string; text: string; onRetry?: () => void; loading?: boolean }) {
   return (
     <div style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
       <div>
-        <div style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 24, marginBottom: 10 }}>{title}</div>
-        <div style={{ fontSize: 15, color: MUTED, maxWidth: 380 }}>{text}</div>
+        <div style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 24, marginBottom: 10 }}>{title}</div>
+        <div role={onRetry ? "alert" : "status"} style={{ fontSize: 15, color: MUTED, maxWidth: 380 }}>{text}</div>
+        {onRetry && <button className="bk-retry" onClick={onRetry} disabled={loading}>{loading ? "Cargando…" : "Reintentar"}</button>}
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Preguntas frecuentes — tienen que ser IDÉNTICAS al FAQPage de index.html:
-// Schema.org (y las guías de Google) exigen que un FAQPage refleje contenido
-// que el visitante puede leer de verdad en la página, nunca datos que solo
-// existen en el JSON-LD. Si se edita una pregunta, hay que editar las dos.
-// ---------------------------------------------------------------------------
-const FAQ_ITEMS: { question: string; answer: string }[] = [
-  {
-    question: "¿Qué es Batikiosco?",
-    answer:
-      "Batikiosco es un kiosco de barrio en Zulueta, Villa Clara, Cuba. Este sitio es su catálogo digital: muestra los productos y precios reales del negocio.",
-  },
-  {
-    question: "¿Puedo comprar directamente desde este catálogo?",
-    answer: "No. Este catálogo es informativo: los precios se muestran como referencia y las compras se hacen directamente en el local.",
-  },
-  {
-    question: "¿Los precios y las ofertas están actualizados?",
-    answer:
-      "Sí. El catálogo se conecta en vivo al mismo sistema que usa Batikiosco en el mostrador, así que los precios y las ofertas reflejan lo que hay disponible en el momento.",
-  },
-  {
-    question: "¿Dónde queda Batikiosco?",
-    answer: `En ${BUSINESS_ADDRESS}.`,
-  },
-  {
-    question: "¿Cuál es el horario de atención de Batikiosco?",
-    answer: `${BUSINESS_HOURS}.`,
-  },
-];
+const FAQ_ITEMS = config.texts.faq;
 
 function FAQ() {
   return (
     <section id="preguntas" style={{ maxWidth: 900, margin: "0 auto", padding: "clamp(40px,5vw,68px) 22px" }}>
       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: RED, marginBottom: 10 }}>Ayuda</div>
-      <h2 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 800, fontSize: "clamp(28px,3.6vw,40px)", margin: "0 0 26px", letterSpacing: "-.015em" }}>
+      <h2 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 800, fontSize: "clamp(28px,3.6vw,40px)", margin: "0 0 26px", letterSpacing: "-.015em" }}>
         Preguntas frecuentes
       </h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {FAQ_ITEMS.map((f) => (
           <div key={f.question} style={{ background: PAPER, borderRadius: 18, padding: "20px 22px", border: `1px solid ${LINE}` }}>
-            <h3 style={{ fontFamily: "'Baloo 2', cursive", fontWeight: 700, fontSize: 17, margin: "0 0 8px" }}>{f.question}</h3>
+            <h3 style={{ fontFamily: "var(--catalog-font-heading)", fontWeight: 700, fontSize: 17, margin: "0 0 8px" }}>{f.question}</h3>
             <p style={{ fontSize: 14.5, color: MUTED, lineHeight: 1.6, margin: 0 }}>{f.answer}</p>
           </div>
         ))}
@@ -1043,62 +1019,19 @@ function FAQ() {
   );
 }
 
-/** Evita que un nombre/descripción de producto con "</script>" adentro corte
- * el <script> de datos estructurados a la mitad — mitigación estándar para
- * JSON-LD embebido con dangerouslySetInnerHTML. */
-function safeJsonLd(data: unknown): string {
-  return JSON.stringify(data).replace(/</g, "\\u003c");
-}
-
-/** Product/Offer de los productos cargados en este momento — a diferencia
- * del resto de los datos estructurados (Organization/WebSite/Store/FAQPage,
- * siempre iguales, ver index.html), esto depende del catálogo real que se
- * trae en vivo desde el servidor, así que solo puede armarse acá. Precio y
- * moneda son los mismos que ve cualquier visitante; "InStock" es correcto
- * siempre, porque /public/catalog ya excluye productos sin existencia (ver
- * posPublicCatalogService.getPublicCatalog). Esto lo ven los rastreadores
- * que ejecutan JavaScript (Google sí; la mayoría de los bots de IA, hoy,
- * todavía no — ver la nota sobre pre-renderizado). */
 function ProductStructuredData({ items, currency }: { items: Item[]; currency: string }) {
   if (items.length === 0) return null;
-  const graph = items.map((p) => ({
-    "@type": "Product",
-    name: p.name,
-    ...(p.description ? { description: p.description } : {}),
-    ...(p.imageUrl ? { image: p.imageUrl } : {}),
-    ...(p.categories[0] ? { category: p.categories[0] } : {}),
-    offers: {
-      "@type": "Offer",
-      price: p.effectivePrice,
-      priceCurrency: p.priceCurrency || currency,
-      availability: "https://schema.org/InStock",
-      url: `https://batikiosko.github.io/#producto-${p.id}`,
-    },
-  }));
-  return (
-    <script
-      type="application/ld+json"
-      // eslint-disable-next-line react/no-danger -- JSON-LD, no HTML: safeJsonLd escapa "<" para que no se pueda cortar el <script>.
-      dangerouslySetInnerHTML={{ __html: safeJsonLd({ "@context": "https://schema.org", "@graph": graph }) }}
-    />
-  );
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(productStructuredData(items, currency, config)) }} />;
 }
 
 export function App() {
-  const [catalog, setCatalog] = useState<PublicCatalog | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { catalog, error, loading, retry } = useCatalog();
   // Multi-selección: cero categorías elegidas = "Todas". Un producto puede
   // tener más de una categoría (ver Product.catalogCategories), así que acá
   // también se puede elegir más de un filtro a la vez y se combinan.
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchCatalog()
-      .then(setCatalog)
-      .catch((err) => setError(err instanceof Error ? err.message : "No se pudo cargar el catálogo."));
-  }, []);
 
   const items = useMemo(() => (catalog ? catalog.products.map(enrich) : []), [catalog]);
 
@@ -1123,15 +1056,7 @@ export function App() {
     });
   }
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return items.filter((p) => {
-      const matchesCategory = selectedCategories.size === 0 || p.categories.some((c) => selectedCategories.has(c));
-      const matchesQuery =
-        !q || `${p.name} ${p.catalogDetails.join(" ")} ${p.categories.join(" ")}`.toLowerCase().includes(q);
-      return matchesCategory && matchesQuery;
-    });
-  }, [items, selectedCategories, query]);
+  const visible = useMemo(() => filterProducts(items, selectedCategories, query), [items, selectedCategories, query]);
 
   const offers = useMemo(() => items.filter((p) => p.onOffer), [items]);
   const novelties = useMemo(
@@ -1156,11 +1081,11 @@ export function App() {
     return [...sameCategory, ...others].slice(0, 3);
   }, [items, detail]);
 
-  if (error) {
-    return <CenteredMessage title="No pudimos cargar el catálogo" text={error} />;
+  if (error && !catalog) {
+    return <CenteredMessage title="No pudimos cargar el catálogo" text={error} onRetry={retry} loading={loading} />;
   }
   if (!catalog) {
-    return <CenteredMessage title="Cargando catálogo..." text="Un momento, estamos trayendo los productos y ofertas del kiosco." />;
+    return <CenteredMessage title="Cargando catálogo..." text={config.texts.loading} />;
   }
 
   const resultLabel = `${visible.length} ${visible.length === 1 ? "producto" : "productos"}${
@@ -1172,11 +1097,13 @@ export function App() {
   }`;
 
   return (
-    <div style={{ maxWidth: "100%", overflowX: "hidden", background: "#fff" }}>
+    <div style={{ maxWidth: "100%", background: "#fff" }}>
       <ProductStructuredData items={items} currency={catalog.currency} />
       <MarqueeBar />
       <Header query={query} onQuery={setQuery} onSearch={goToSearchResult} />
-      <main id="main-content">
+      <main id="main-content" aria-busy={loading}>
+        {error && <div role="alert" className="bk-data-notice">No se pudo actualizar: {error} Los precios mostrados corresponden a la última carga. <button className="bk-retry" onClick={retry} disabled={loading}>Reintentar</button></div>}
+        {catalog.warnings.length > 0 && <div role="status" className="bk-data-notice">Algunos productos no pudieron mostrarse por datos incompletos. <button className="bk-retry" onClick={retry} disabled={loading}>Reintentar</button></div>}
         <Hero catalog={catalog} offerCount={offers.length} categoryCount={categories.length} />
         <VisitInfo />
         {categories.length > 0 && (

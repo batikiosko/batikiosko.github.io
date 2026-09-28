@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://batikiosko.github.io/sitemap.xml
