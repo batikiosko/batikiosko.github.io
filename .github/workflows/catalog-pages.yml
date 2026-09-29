@@ -1,0 +1,108 @@
+# TEMPLATE: install on business default branch as .github/workflows/catalog-pages.yml.
+name: CES static catalog Pages
+on:
+  repository_dispatch:
+    types: [ces-catalog-release]
+  workflow_dispatch:
+    inputs:
+      artifact_sha:
+        description: Existing full catalog-dist commit SHA (rollback reuses bytes)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Validate receiver and requested artifact
+        id: request
+        env:
+          ARTIFACT_SHA: ${{ inputs.artifact_sha || github.event.client_payload.artifact_sha }}
+          DISPATCH_PROFILE: ${{ github.event.client_payload.profile }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const profile = JSON.parse(fs.readFileSync('catalog-target.json')).profile;
+          if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(profile) || !/^[a-f0-9]{40}$/.test(process.env.ARTIFACT_SHA) ||
+              (process.env.DISPATCH_PROFILE && process.env.DISPATCH_PROFILE !== profile)) throw new Error('Invalid receiver/request');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'profile=' + profile + '\nsha=' + process.env.ARTIFACT_SHA + '\n');
+          NODE
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.request.outputs.sha }}
+          path: artifact
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify static bytes (never execute artifact code)
+        env:
+          PROFILE: ${{ steps.request.outputs.profile }}
+          ARTIFACT_SHA: ${{ steps.request.outputs.sha }}
+        run: |
+          git -C artifact merge-base --is-ancestor "$ARTIFACT_SHA" origin/catalog-dist
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, readdirSync, lstatSync, realpathSync } from 'node:fs';
+          import { resolve, relative, isAbsolute } from 'node:path';
+
+          const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+          function verifyRelease(directory, profile, repository, { allowDirty = false } = {}) {
+            const root = realpathSync(directory);
+            const read = path => {
+              if (typeof path !== 'string' || !/^(?:assets\/[a-zA-Z0-9_.-]+|[a-zA-Z0-9_.-]+)$/.test(path)) throw new Error('Ruta de release inválida.');
+              const file = resolve(root, path), local = relative(root, realpathSync(file));
+              if (local.startsWith('..') || isAbsolute(local) || lstatSync(file).isSymbolicLink()) throw new Error('Archivo fuera de release.');
+              return readFileSync(file);
+            };
+            const release = JSON.parse(read('catalog-release.json'));
+            if (release.schemaVersion !== 1 || release.profile !== profile || release.repository !== repository ||
+                !/^[a-f0-9]{40}$/.test(release.engineCommit) || (!allowDirty && release.sourceDirty !== false)) throw new Error('Identidad/procedencia de release inválida.');
+            if (!Array.isArray(release.files) || new Set(release.files.map(f => f.path)).size !== release.files.length ||
+                release.files.some(f => !/^[a-f0-9]{64}$/.test(f.sha256)) || sha256(JSON.stringify(release.files)) !== release.artifactDigest) throw new Error('Inventario de release inválido.');
+            for (const file of release.files) if (sha256(read(file.path)) !== file.sha256) throw new Error('Checksum incorrecto: ' + file.path);
+            const expected = new Set([...release.files.map(f => f.path), 'catalog-release.json']);
+            const actual = [];
+            for (const entry of readdirSync(root, { withFileTypes: true })) {
+              if (entry.isDirectory() && entry.name === 'assets') for (const asset of readdirSync(resolve(root, 'assets'))) actual.push('assets/' + asset);
+              else actual.push(entry.name);
+            }
+            if (actual.length !== expected.size || actual.some(f => !expected.has(f))) throw new Error('Archivos extra o faltantes en release.');
+            for (const file of ['index.html','offline.html','manifest.webmanifest','sw.js','catalog-build.json','pwa-assets.json','robots.txt','sitemap.xml']) if (!expected.has(file)) throw new Error('Release incompleto.');
+            const config = JSON.parse(read('catalog-build.json')), manifest = JSON.parse(read('manifest.webmanifest'));
+            const url = new URL(release.publicUrl), base = url.pathname;
+            if (url.protocol !== 'https:' || url.username || url.password || config.publicUrl !== release.publicUrl ||
+                config.build.profile !== profile || config.build.engineCommit !== release.engineCommit || config.build.configDigest !== release.configDigest ||
+                manifest.display !== 'standalone' || manifest.scope !== base || manifest.start_url !== base || manifest.id !== base) throw new Error('Metadata/PWA de release incoherente.');
+            if (!manifest.icons.every(icon => icon.src.startsWith(base + 'assets/') && expected.has(icon.src.slice(base.length)))) throw new Error('Iconos fuera de release.');
+            return release;
+          }
+
+          const release = verifyRelease('artifact/site', process.env.PROFILE, process.env.GITHUB_REPOSITORY);
+          console.log(JSON.stringify(release));
+          const { appendFileSync } = await import('node:fs');
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'Artifact commit: ' + process.env.ARTIFACT_SHA + '\nEngine: ' + release.engineCommit + '\nDigest: ' + release.artifactDigest + '\nFiles: ' + (release.files.length + 1) + '\n');
+          NODE
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: artifact/site
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy validated static artifact
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
