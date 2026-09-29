@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "Batikiosco",
+  "short_name": "Batikiosco",
+  "description": "Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, categorías, ofertas y precios actualizados, disponibles para comprar en el local.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F5",
+  "theme_color": "#E53935",
+  "icons": [
+    {
+      "src": "/assets/batikiosco-192-02cfa47f6d.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/batikiosco-512-00b78f3acf.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/batikiosco-maskable-512-8dbd235424.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

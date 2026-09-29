@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "profile": "batikiosco",
+  "engineCommit": "0880ee3be22b8f06519ef6f7e900fa31d31c1eff",
+  "engineVersion": "0.1.0",
+  "createdAt": "2026-09-28T22:02:52.229Z",
+  "sourceDirty": false,
+  "configDigest": "6361a12bb8af436c4c6c4be46ef498629f0301370da6fb8c7786939b50c29829",
+  "repository": "batikiosko/batikiosko.github.io",
+  "publicUrl": "https://batikiosko.github.io/",
+  "artifactDigest": "7a93df478058641782a1045d1554d6251f1e20d41e7afb4014edd6f1773d3e5b",
+  "files": [
+    {
+      "path": "assets/aseo-a7257fec2c.jpeg",
+      "sha256": "a7257fec2c002799fa12b481da74b11bca649dc111f2ff22e6f5bc3712dae58d"
+    },
+    {
+      "path": "assets/batikiosco-192-02cfa47f6d.png",
+      "sha256": "02cfa47f6d899ef6536a55c6d814756e874d860356bd3f92d0055fb006019439"
+    },
+    {
+      "path": "assets/batikiosco-512-00b78f3acf.png",
+      "sha256": "00b78f3acf4556cde37e03902d45ce474be1b4e0a9ea76a5d420b5b5fd6dd6b2"
+    },
+    {
+      "path": "assets/batikiosco-apple-180-bb2fc312f2.png",
+      "sha256": "bb2fc312f28824ca00de83b828a967c4dddb0da63c4a5fcf9fb6cff2f7801cca"
+    },
+    {
+      "path": "assets/batikiosco-maskable-512-8dbd235424.png",
+      "sha256": "8dbd235424b5a7fb94751367a2fe15fc86d725637e65ba3de60d41a2e882294e"
+    },
+    {
+      "path": "assets/bebidas-alcoholicas-783519ef64.jpeg",
+      "sha256": "783519ef64a233a08f764297c78aabdcb41e3956a14944226b3783aa9c888718"
+    },
+    {
+      "path": "assets/bebidas-sin-alcohol-e50b6d10bf.jpeg",
+      "sha256": "e50b6d10bf493aa8e52cbfbf4e7e1d1aca18ec6f36c9c5a3719e47627ce9e348"
+    },
+    {
+      "path": "assets/catalog-qr-c5fcfbd556.png",
+      "sha256": "c5fcfbd5564d25e5714925d95530744f23aadd01cccd4c5576ee7b76bef509e5"
+    },
+    {
+      "path": "assets/cigarros-541b2e5774.jpeg",
+      "sha256": "541b2e577427806026ebed1314b064418439066365a6bd174c4ca921c156e284"
+    },
+    {
+      "path": "assets/comestible-1872eaa68d.jpeg",
+      "sha256": "1872eaa68d4905100920d0ae5ca6eefc89ae7f909570a236645be2160b5b6243"
+    },
+    {
+      "path": "assets/confitura-2e871549c6.jpeg",
+      "sha256": "2e871549c6e992e64c8d9e0302ce64b4234cb36cceed3e730ad233435dc7aba8"
+    },
+    {
+      "path": "assets/favicon-16x16-e9e894e0a9.png",
+      "sha256": "e9e894e0a9a346832187c5eabdb293a46383ffebe3fb5825af2effe75d4feeaf"
+    },
+    {
+      "path": "assets/favicon-32x32-3b35832d79.png",
+      "sha256": "3b35832d79f907cf5c998a95fa2591637397efb07eda20df56255c4093f1637b"
+    },
+    {
+      "path": "assets/favicon-48x48-ace42d8f78.png",
+      "sha256": "ace42d8f788ab104028b3ad15b4265e5401650150c860e187f257dddcdcc3d8d"
+    },
+    {
+      "path": "assets/index-BYb_d967.css",
+      "sha256": "85d917d179cb2a267e6088959d20f08b7358ea6ff9917850500ec03d3a1df3ec"
+    },
+    {
+      "path": "assets/index-DoaiPafW.js",
+      "sha256": "252806fd4db50dd64e3757a480b35f00c320caf637a4c1d9768f19ac28cf60e3"
+    },
+    {
+      "path": "assets/logo-batikiosco-transparent-dd39330894.png",
+      "sha256": "dd393308942851c683ec29186a5781db01239a9453a0b1cac5aad5f09143e546"
+    },
+    {
+      "path": "assets/og-image-042ecc9f51.png",
+      "sha256": "042ecc9f51578e12b0f2de6eb0744918ef0cf06f07ed2a82f3e2d1859572e771"
+    },
+    {
+      "path": "catalog-build.json",
+      "sha256": "37e9c3df22cac806567d471af3b38b85560a4dec5731e561f8565ffc89463cb9"
+    },
+    {
+      "path": "index.html",
+      "sha256": "a0ee1ec131017ed64ecb95b735f949389d94f2fc85b9661055450660d5d3f7f3"
+    },
+    {
+      "path": "manifest.webmanifest",
+      "sha256": "d2782e12233935140d6c246c66c2b8efd3c53ce2e58e3abd4f31a7eb8d27c9b7"
+    },
+    {
+      "path": "offline.html",
+      "sha256": "02313435bd799cf9d74ea07f882bcf83f0be037ae4b6ba54803334424279f967"
+    },
+    {
+      "path": "pwa-assets.json",
+      "sha256": "738eecb03436520557bde8bd6c2460de5b317999898bdbf4d1ecb5054983bf58"
+    },
+    {
+      "path": "robots.txt",
+      "sha256": "5f3cddc86413e37c1c30a6340dde204b37770f1eb65c03e90d14abb8f3e288be"
+    },
+    {
+      "path": "sitemap.xml",
+      "sha256": "591ae36a907b7262053570b797233b8eb3263133297fa2929b3186ef7b0d0fa2"
+    },
+    {
+      "path": "sw.js",
+      "sha256": "79953e57f5bdcba4956b454a4898b891cdce8e040e726dea7d16ac81f3d5e4db"
+    }
+  ]
+}
