@@ -73,7 +73,7 @@
     "loading": "Un momento, estamos trayendo los productos y ofertas del kiosco.",
     "offersDescription": "Precios especiales mientras dure la promoción en el kiosco.",
     "noveltiesDescription": "Lo último que llegó al mostrador. Desliza para ver más.",
-    "catalogNotice": "Este es un catálogo informativo. Los precios se muestran como referencia y las compras se realizan directamente en el kiosco.",
+    "catalogNotice": "Haz tu pedido desde el catálogo, a domicilio o para recoger en el kiosco, y paga en efectivo al recibirlo. Los precios y las ofertas están conectados al sistema del kiosco.",
     "marquee": [
       "Catálogo digital",
       "Precios actualizados",
@@ -87,7 +87,19 @@
       },
       {
         "question": "¿Puedo comprar directamente desde este catálogo?",
-        "answer": "No. Este catálogo es informativo: los precios se muestran como referencia y las compras se hacen directamente en el local."
+        "answer": "Sí. Toca «Agregar» en los productos que quieras, abre el carrito (abajo a la derecha) y completa tu nombre y teléfono. Puedes pedir a domicilio o pasar a recogerlo en el kiosco. Pagas en efectivo cuando recibes o recoges el pedido."
+      },
+      {
+        "question": "¿Cómo sé en qué va mi pedido?",
+        "answer": "Toca «Mis pedidos» (abajo a la izquierda). Ahí ves si tu pedido fue confirmado, si se está preparando, si ya está listo o en camino. Se guarda solo en este teléfono; si cambias de teléfono, usa el código privado de seguimiento."
+      },
+      {
+        "question": "¿Cómo funcionan las ofertas por cantidad?",
+        "answer": "Algunas ofertas aplican llevando una cantidad mínima, por ejemplo «llevando 4 o más». Al llegar a esa cantidad en el carrito, todas las unidades pasan al precio de oferta y lo ves antes de enviar el pedido."
+      },
+      {
+        "question": "¿Qué pasa con mi pedido a domicilio?",
+        "answer": "El kiosco confirma tu pedido, lo prepara y un repartidor lo lleva a tu dirección. Al recibirlo, pagas el total en efectivo y le das al repartidor el código de entrega que aparece en «Mis pedidos»."
       },
       {
         "question": "¿Los precios y las ofertas están actualizados?",
@@ -105,7 +117,7 @@
   },
   "seo": {
     "title": "Batikiosco | Catálogo digital de productos y precios en Zulueta, Cuba",
-    "description": "Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, categorías, ofertas y precios actualizados, disponibles para comprar en el local.",
+    "description": "Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, ofertas y precios actualizados; pide online a domicilio o para recoger y paga en efectivo.",
     "locale": "es_CU",
     "language": "es",
     "indexable": true,
@@ -147,15 +159,15 @@
       }
     ],
     "name": "Batikiosco",
-    "description": "Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, categorías, ofertas y precios actualizados, disponibles para comprar en el local."
+    "description": "Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, ofertas y precios actualizados; pide online a domicilio o para recoger y paga en efectivo."
   },
   "catalogIdentity": "device:cmt7nja2e0006zxuw3f9l05u1",
   "build": {
     "profile": "batikiosco",
-    "engineCommit": "8c7396f1254304a63c76bfa7a4326c7a01bcc921",
+    "engineCommit": "7e4f2cb73a4ceac2cf071c3ddb1859570b13c648",
     "engineVersion": "0.1.0",
-    "createdAt": "2026-10-28T03:01:03.581Z",
+    "createdAt": "2026-10-28T19:32:42.582Z",
     "sourceDirty": false,
-    "configDigest": "1699a24c468c7339bff8c8f48f255ac2c03c27d2d7b85e5a1d9f5fa00d69c116"
+    "configDigest": "fb68a78d6265c2795c6b07de7a25df9c53f4beb3ee8ed53c8696eae7ab30081a"
   }
 }
