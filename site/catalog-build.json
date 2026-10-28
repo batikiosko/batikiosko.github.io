@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "companyId": "cmt7ni4vh0000zxuwpq1drg58",
-  "deviceId": null,
+  "deviceId": "cmt7nja2e0006zxuw3f9l05u1",
   "syncServerUrl": "https://contabilidad-sync-server.onrender.com/",
   "business": {
     "name": "Batikiosco",
@@ -116,6 +116,13 @@
     "analyticsId": "G-WB4KS6EYFP",
     "sentryDsn": "https://5ac5ca130b6f66e11ccc34416a15edfc@o4511950705328128.ingest.us.sentry.io/4511951121481728"
   },
+  "commerce": {
+    "enabled": true,
+    "fulfillment": [
+      "DELIVERY",
+      "PICKUP"
+    ]
+  },
   "pwa": {
     "iconSource": "public/icon-512.png",
     "shortName": "Batikiosco",
@@ -142,12 +149,13 @@
     "name": "Batikiosco",
     "description": "Catálogo digital de Batikiosco, un kiosco de barrio en Zulueta, Villa Clara, Cuba. Productos, categorías, ofertas y precios actualizados, disponibles para comprar en el local."
   },
+  "catalogIdentity": "device:cmt7nja2e0006zxuw3f9l05u1",
   "build": {
     "profile": "batikiosco",
-    "engineCommit": "0880ee3be22b8f06519ef6f7e900fa31d31c1eff",
+    "engineCommit": "61ed8620f7280ac09a33c3a3621e1f74e6657959",
     "engineVersion": "0.1.0",
-    "createdAt": "2026-09-28T22:02:52.229Z",
+    "createdAt": "2026-10-27T23:41:28.138Z",
     "sourceDirty": false,
-    "configDigest": "6361a12bb8af436c4c6c4be46ef498629f0301370da6fb8c7786939b50c29829"
+    "configDigest": "1699a24c468c7339bff8c8f48f255ac2c03c27d2d7b85e5a1d9f5fa00d69c116"
   }
 }
