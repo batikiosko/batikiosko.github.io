@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "profile": "batikiosco",
-  "engineCommit": "7e4f2cb73a4ceac2cf071c3ddb1859570b13c648",
+  "engineCommit": "bfb76ba019b29a6200365b3d90ad17b527cb1f10",
   "engineVersion": "0.1.0",
-  "createdAt": "2026-10-28T19:32:42.582Z",
+  "createdAt": "2026-10-29T22:20:45.040Z",
   "sourceDirty": false,
   "configDigest": "fb68a78d6265c2795c6b07de7a25df9c53f4beb3ee8ed53c8696eae7ab30081a",
   "repository": "batikiosko/batikiosko.github.io",
   "publicUrl": "https://batikiosko.github.io/",
-  "artifactDigest": "19be28fac94e1ad4f5460aafb1b7493855562b97cdf6a2612751ce6327dff870",
+  "artifactDigest": "ae6d4b0296813a414d7cff9405bcee94b23fcbfe3ef4e5fec1f556fbce2dc5bf",
   "files": [
     {
       "path": "assets/aseo-a7257fec2c.jpeg",
@@ -67,12 +67,12 @@
       "sha256": "ace42d8f788ab104028b3ad15b4265e5401650150c860e187f257dddcdcc3d8d"
     },
     {
-      "path": "assets/index-BSAoi2XK.css",
-      "sha256": "c621476f7ac14947e23851b652a7a82b000031c859550b9d5c72c5913880e2eb"
+      "path": "assets/index-D0K3zdzJ.css",
+      "sha256": "5c132c3e415ad9c801d80ec73a3acc3d2583bb42bf6188579c2e21b08dfcbb01"
     },
     {
-      "path": "assets/index-DH9TWDDN.js",
-      "sha256": "fd0a2ff51493287d1d80323d0759a88cbbcecc759a3c67c013fac81559f5d309"
+      "path": "assets/index-DgIXVfgL.js",
+      "sha256": "0128a14d6038fb8a05e5389b496f092ebde93f46dc9f6c4b562c593f64de5320"
     },
     {
       "path": "assets/logo-batikiosco-transparent-dd39330894.png",
@@ -84,11 +84,11 @@
     },
     {
       "path": "catalog-build.json",
-      "sha256": "a57c1c152faef93ddef59739f41f5b1c6a4c6855f8f11417d1416ea740cac324"
+      "sha256": "54f3cc5b88f87e63a361f225509f0f339a2fd4e80012d8bc61443e09ab9743ed"
     },
     {
       "path": "index.html",
-      "sha256": "ef454b508e93f8003b017b5242231265f4124efd86ace3fc8917557d03e84bf6"
+      "sha256": "157799d54c5bebdd654c49d404851cf82032ae7942a5c9ea9ab46845f33b69b8"
     },
     {
       "path": "manifest.webmanifest",
@@ -96,11 +96,11 @@
     },
     {
       "path": "offline.html",
-      "sha256": "74581708a0d4ee91f4c410ef0a67d2381bc218198e43b2fad5b20836bda76234"
+      "sha256": "9cf18b45efb245f0f4d1928680bf255d04014800b4ea1d64837feeb2baf8ada0"
     },
     {
       "path": "pwa-assets.json",
-      "sha256": "0c78b673062d9ff6ae13c46d9877328a49dc923ee79b70b6bf010aba0baa4a9e"
+      "sha256": "6b6b6776ee97695fb8bf32232702d1c3923955b6d6e6b69b400d3eb5edc50788"
     },
     {
       "path": "robots.txt",
@@ -112,7 +112,7 @@
     },
     {
       "path": "sw.js",
-      "sha256": "74f339092e26b62f142b654b4574a22a4abbe5fee6a26fd14398f337f62562c9"
+      "sha256": "2b4e39675110d9c8dbd8c81d6be79026f7eac5b467449d3656cdfc37b3f46f13"
     }
   ]
 }
