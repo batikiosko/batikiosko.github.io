@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "profile": "batikiosco",
-  "engineCommit": "ce738ff965a4be0abde5fc19ffbe24a858db83fd",
+  "engineCommit": "3df37d6bc873c10be89efd62530f2ca5b9babbdd",
   "engineVersion": "0.1.0",
-  "createdAt": "2026-11-02T18:57:35.851Z",
+  "createdAt": "2026-11-03T08:29:36.237Z",
   "sourceDirty": false,
   "configDigest": "fb68a78d6265c2795c6b07de7a25df9c53f4beb3ee8ed53c8696eae7ab30081a",
   "repository": "batikiosko/batikiosko.github.io",
   "publicUrl": "https://batikiosko.github.io/",
-  "artifactDigest": "13f1ae93754c8cc23c20ed6fa28e6dcf636d7938d415b198006e09840c9c01e2",
+  "artifactDigest": "eb7874fe0e7976c670ab0ce79be8a8432009a5f3b4571696dcc415323821c903",
   "files": [
     {
       "path": "assets/aseo-a7257fec2c.jpeg",
@@ -71,8 +71,8 @@
       "sha256": "5c132c3e415ad9c801d80ec73a3acc3d2583bb42bf6188579c2e21b08dfcbb01"
     },
     {
-      "path": "assets/index-D3KkaRw3.js",
-      "sha256": "6610a7829e3f77796f79e9c57e7d88d3f5da3224f20129b1f2a1f8e77f93dedf"
+      "path": "assets/index-DD73Jc9N.js",
+      "sha256": "fe3e10d0c1edc89ab5ab8c59d5dd8a426a04c981cd5f256143dae7d601133751"
     },
     {
       "path": "assets/logo-batikiosco-transparent-dd39330894.png",
@@ -84,11 +84,11 @@
     },
     {
       "path": "catalog-build.json",
-      "sha256": "c46d68e77bbbc6e55a1a3a8f82c4f2dec1861e91bc04699f826659b53666afc0"
+      "sha256": "456d65bb14b6abf7099e094823d4d67de0a9a7f822a68a1b1fe948d845084de0"
     },
     {
       "path": "index.html",
-      "sha256": "8ffb8c6a21a8429efee44e955d130a73d4025e43427ec37feec314623f5e6df7"
+      "sha256": "c3b1c6a9e6596b035622faec4018f1a0853d22c27f6697c672a118920dd90846"
     },
     {
       "path": "manifest.webmanifest",
@@ -96,11 +96,11 @@
     },
     {
       "path": "offline.html",
-      "sha256": "463e6679dd3b0adf3ad801e5a7248a4c250dbe5c0e60703511eba0bc0c545267"
+      "sha256": "7bfcaebfc7e62352dec2bf67e596cbde783faa22aad5fc9ac136c9caf3934b14"
     },
     {
       "path": "pwa-assets.json",
-      "sha256": "31716153afff8493f5e4024d207f2ea576a6c8ec3c7b55e96cd119b79bf11684"
+      "sha256": "3f2dcf0ccf82405343c33132ee1a0ed2fb93d1c23855adf3095a4fed88585439"
     },
     {
       "path": "robots.txt",
@@ -112,7 +112,7 @@
     },
     {
       "path": "sw.js",
-      "sha256": "ddcee2bc6629ed7a212cd720c70151710613140755da86f525dbeada9a72c50a"
+      "sha256": "71d61a1a5bc3f903424db70bf64f6fcdd8c6a22f31d9dd730d7de6b21fd6fbc3"
     }
   ]
 }
