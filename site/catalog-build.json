@@ -164,9 +164,9 @@
   "catalogIdentity": "device:cmt7nja2e0006zxuw3f9l05u1",
   "build": {
     "profile": "batikiosco",
-    "engineCommit": "604b6e14c9f7db20a118f65f253ded2a9fa27641",
+    "engineCommit": "e32cc7f1da2aa7123f0493a7d7f6bca71a4d9388",
     "engineVersion": "0.1.0",
-    "createdAt": "2026-11-03T17:24:05.026Z",
+    "createdAt": "2026-11-10T19:50:56.583Z",
     "sourceDirty": false,
     "configDigest": "fb68a78d6265c2795c6b07de7a25df9c53f4beb3ee8ed53c8696eae7ab30081a"
   }
